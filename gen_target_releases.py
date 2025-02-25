@@ -18,6 +18,7 @@ from datetime import datetime
 links = {
     "libpng": "https://github.com/pnggroup/libpng",
     "libsndfile": "https://github.com/libsndfile/libsndfile.git",
+    "libtiff": "https://gitlab.com/libtiff/libtiff.git",
 }
 
 repos = []
