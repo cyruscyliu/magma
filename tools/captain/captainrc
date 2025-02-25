@@ -89,3 +89,6 @@ FUZZERS=(afl aflfast moptafl aflplusplus fairfuzz honggfuzz)
 
 # [fuzzer_CAMPAIGN_WORKERS]: overrides the global CAMPAIGN_WORKERS setting
 # afl_CAMPAIGN_WORKERS=3
+
+# [TARGET_VERSION]: target version to be chosen from its releases file
+TARGET_VERSION=PIONEER
