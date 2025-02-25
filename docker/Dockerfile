@@ -57,13 +57,19 @@ RUN ${FUZZER}/build.sh
 
 ARG target_name
 ARG target_path=targets/${target_name}
-ENV TARGET 	${MAGMA_R}/${target_path}
+ENV TARGET_NAME ${target_name}
+ENV TARGET 	    ${MAGMA_R}/${target_path}
+ARG target_version
+ENV TARGET_VERSION=${target_version}
 USER root:root
 RUN mkdir -p ${TARGET} && chown magma:magma ${TARGET}
 COPY --chown=magma:magma ${magma_root}/${target_path} ${TARGET}/
 RUN ${TARGET}/preinstall.sh
 USER magma:magma
-RUN ${TARGET}/fetch.sh
+# TODO: Remove the following line once all targets use fetch_target.sh
+# RUN ${TARGET}/fetch.sh
+RUN chmod +x ${MAGMA}/fetch_target.sh && \
+ 	${MAGMA}/fetch_target.sh
 RUN ${MAGMA}/apply_patches.sh
 
 ## Configuration parameters
