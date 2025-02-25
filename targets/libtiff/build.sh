@@ -9,9 +9,14 @@ set -e
 ##
 
 if [ ! -d "$TARGET/repo" ]; then
-    echo "fetch.sh must be executed first."
+    echo "fetch_target.sh must be executed first."
     exit 1
 fi
+
+# An extra target specific step from previously used libtiff/fetch.sh
+# TODO: Are there any changes to be made in this file?
+cp "$TARGET/src/tiff_read_rgba_fuzzer.cc" \
+    "$TARGET/repo/contrib/oss-fuzz/tiff_read_rgba_fuzzer.cc"
 
 WORK="$TARGET/work"
 rm -rf "$WORK"
