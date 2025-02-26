@@ -16,11 +16,12 @@ from git import Repo
 from datetime import datetime
 
 links = {
-    "libpng": "https://github.com/pnggroup/libpng",
+    "libpng": "https://github.com/pnggroup/libpng.git",
     "libsndfile": "https://github.com/libsndfile/libsndfile.git",
     "libtiff": "https://gitlab.com/libtiff/libtiff.git",
     "libxml2": "https://gitlab.gnome.org/GNOME/libxml2.git",
     "lua": "https://github.com/lua/lua.git",
+    "openssl": "https://github.com/openssl/openssl.git",
 }
 
 repos = []
