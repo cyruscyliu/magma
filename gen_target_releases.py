@@ -19,6 +19,7 @@ links = {
     "libpng": "https://github.com/pnggroup/libpng",
     "libsndfile": "https://github.com/libsndfile/libsndfile.git",
     "libtiff": "https://gitlab.com/libtiff/libtiff.git",
+    "libxml2": "https://gitlab.gnome.org/GNOME/libxml2.git",
 }
 
 repos = []

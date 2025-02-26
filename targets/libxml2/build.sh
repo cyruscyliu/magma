@@ -9,7 +9,7 @@ set -e
 ##
 
 if [ ! -d "$TARGET/repo" ]; then
-    echo "fetch.sh must be executed first."
+    echo "fetch_target.sh must be executed first."
     exit 1
 fi
 

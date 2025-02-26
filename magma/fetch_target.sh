@@ -13,7 +13,7 @@ source "$TARGET"/releases
 to_fetch_var="$TARGET_NAME"_"$TARGET_VERSION"
 to_fetch=${!to_fetch_var}
 
-if [[ "$to_fetch" =~ ^https://(github\.com|gitlab\.com)/.+/.+ ]]; then
+if [[ "$to_fetch" =~ ^https://(github\.com|gitlab\.com|gitlab\.gnome\.org)/.+/.+ ]]; then
     git clone "$to_fetch" "$TARGET/repo"
 elif [[ "$to_fetch" =~ \.tar\.gz$ ]]; then
     wget -O "$TARGET"/repo.tar.gz "$to_fetch"
