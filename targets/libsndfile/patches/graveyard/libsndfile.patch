@@ -1,3 +1,6 @@
+// All these updates are already fixed in the latest version of libsndfile.
+// This patch is no longer needed.
+
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -450,7 +450,7 @@
