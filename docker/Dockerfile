@@ -35,6 +35,7 @@ RUN mkdir -p /home && \
 	useradd -l -u ${USER_ID} -K UMASK=0000 -d /home -g magma magma && \
 	chown magma:magma /home
 RUN	echo "magma:amgam" | chpasswd && usermod -a -G sudo magma
+RUN echo "magma ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 RUN mkdir -p ${SHARED} ${OUT} ${COV} && \
 	chown magma:magma ${SHARED} ${OUT} ${COV} && \
