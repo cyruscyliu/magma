@@ -13,9 +13,17 @@ source "$TARGET"/releases
 to_fetch_var="$TARGET_NAME"_"$TARGET_VERSION"
 to_fetch=${!to_fetch_var}
 
-if [[ "$to_fetch" =~ ^https://(github\.com|gitlab\.com|gitlab\.gnome\.org)/.+/.+ ]]; then
+git_hosts=(
+  github.com
+  gitlab.com
+  gitlab.gnome.org
+  gitlab.freedesktop.org
+)
+host=$(echo "$to_fetch" | awk -F/ '{print $3}')
+
+if [[ " ${git_hosts[*]} " == *" $host "* ]]; then
     git clone "$to_fetch" "$TARGET/repo"
-elif [[ "$to_fetch" =~ \.tar\.gz$ ]]; then
+elif [[ "$to_fetch" =~ \.tar\.gz(\?|$) ]]; then
     wget -O "$TARGET"/repo.tar.gz "$to_fetch"
     mkdir "$TARGET"/repo
     tar -xf "$TARGET"/repo.tar.gz --strip-components=1 -C "$TARGET"/repo
