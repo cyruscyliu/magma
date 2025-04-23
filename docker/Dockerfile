@@ -80,6 +80,8 @@ RUN if [ -f "$TARGET/releases" ]; then \
     else \
         ${TARGET}/fetch.sh; \
     fi
+# Used to fetch any additional git repos for the target
+RUN if [ -f ${TARGET}/fetch_deps.sh ]; then /bin/bash ${TARGET}/fetch_deps.sh; fi
 RUN if [ -n "${SOURCE_COVERAGE}" ]; then \
         cp -a "${TARGET}/." "${COV}/"; \
     fi
