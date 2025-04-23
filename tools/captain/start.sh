@@ -65,7 +65,7 @@ if [ ! -z "$MAGMA_DEBUG" ]; then
 fi
 
 if [ -t 1 ]; then
-    docker run -it $flag_volume \
+    docker run -it --rm $flag_volume \
         --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
         --env=PROGRAM="$PROGRAM" --env=ARGS="$ARGS" \
         --env=FUZZARGS="$FUZZARGS" --env=POLL="$POLL" --env=TIMEOUT="$TIMEOUT" \
