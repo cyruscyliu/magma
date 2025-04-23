@@ -42,6 +42,12 @@ if [ ! -z $AFFINITY ]; then
     flag_aff="--cpuset-cpus=$AFFINITY --env=AFFINITY=$AFFINITY"
 fi
 
+if [ ! -z "$MAGMA_DEBUG" ]; then
+    echo_time "Old entrypoint: $ENTRYPOINT"
+    ENTRYPOINT="/bin/bash"
+    echo_time "New entrypoint: $ENTRYPOINT"
+fi
+
 if [ ! -z "$ENTRYPOINT" ]; then
     flag_ep="--entrypoint=$ENTRYPOINT"
 fi
@@ -49,6 +55,13 @@ fi
 if [ ! -z "$SHARED" ]; then
     SHARED="$(realpath "$SHARED")"
     flag_volume="--volume=$SHARED:/magma_shared"
+fi
+
+
+if [ ! -z "$MAGMA_DEBUG" ]; then
+    flag_volume+=" --volume=$MAGMA/fuzzers/__base:/magma/fuzzers/__base"
+    flag_volume+=" --volume=$MAGMA/fuzzers/$FUZZER:/magma/fuzzers/$FUZZER"
+    flag_volume+=" --volume=$MAGMA/targets/$TARGET:/magma/targets/$TARGET"
 fi
 
 if [ -t 1 ]; then
