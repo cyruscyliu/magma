@@ -68,8 +68,9 @@ RUN ${TARGET}/preinstall.sh
 USER magma:magma
 # TODO: Remove the following line once all targets use fetch_target.sh
 # RUN ${TARGET}/fetch.sh
-RUN chmod +x ${MAGMA}/fetch_target.sh && \
- 	${MAGMA}/fetch_target.sh
+RUN ${MAGMA}/fetch_target.sh
+# Used to fetch any additional git repos for the target
+RUN if [ -f ${TARGET}/fetch_deps.sh ]; then /bin/bash ${TARGET}/fetch_deps.sh; fi
 RUN ${MAGMA}/apply_patches.sh
 
 ## Configuration parameters
