@@ -1,3 +1,5 @@
+// No longer needed, XML_COPTS is not used in the updated libxml2
+// anywhere and build is successful without it.
 diff --git a/Makefile.am b/Makefile.am
 index 05d1671..75ea675 100644
 --- a/Makefile.am
