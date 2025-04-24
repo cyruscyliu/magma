@@ -59,9 +59,9 @@ fi
 
 
 if [ ! -z "$MAGMA_DEBUG" ]; then
-    flag_volume+=" --volume=$MAGMA/fuzzers/__base:/magma/fuzzers/__base"
-    flag_volume+=" --volume=$MAGMA/fuzzers/$FUZZER:/magma/fuzzers/$FUZZER"
-    flag_volume+=" --volume=$MAGMA/targets/$TARGET:/magma/targets/$TARGET"
+    flag_volume+=" --volume=$MAGMA/magma:/magma/magma"
+    flag_volume+=" --volume=$MAGMA/fuzzers/$FUZZER:/magma/fuzzers/$FUZZER/workdir"
+    flag_volume+=" --volume=$MAGMA/targets/$TARGET:/magma/targets/$TARGET/workdir"
 fi
 
 if [ -t 1 ]; then
