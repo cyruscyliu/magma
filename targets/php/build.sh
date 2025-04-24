@@ -24,8 +24,16 @@ export EXTRA_CXXFLAGS="$CXXFLAGS -fno-sanitize=object-size"
 unset CFLAGS
 unset CXXFLAGS
 
+# These need to be exported to build latest PHP with honggfuzz
+export CFLAGS="-fPIE"
+export CXXFLAGS="-fPIE"
+export LDFLAGS="$LDFLAGS -pie"
+
 #build the php library
 ./buildconf
+
+# Note: the acv_cv_func_fork=yes is needed to avoid the fork() 
+# check in configure which fails when using the hongfuzz compiler  
 LIB_FUZZING_ENGINE="-Wall" ./configure \
     --disable-all \
     --enable-option-checking=fatal \
@@ -37,7 +45,8 @@ LIB_FUZZING_ENGINE="-Wall" ./configure \
     --without-pcre-jit \
     --disable-phpdbg \
     --disable-cgi \
-    --with-pic
+    --with-pic \
+    ac_cv_func_fork=yes
 
 make -j$(nproc) clean
 
