@@ -1,0 +1,66 @@
+diff --git a/build/php.m4 b/build/php.m4
+index 53684cf011..467ee8a968 100644
+--- a/build/php.m4
++++ b/build/php.m4
+@@ -272,8 +272,9 @@ dnl Append to the array which has been dynamically chosen at m4 time.
+ dnl Choose the right compiler/flags/etc. for the source-file.
+       case $ac_src in
+         *.c[)] ac_comp="$b_c_pre $ac_inc $b_c_meta m4_normalize(m4_expand([$3])) -c $ac_srcdir$ac_src -o $ac_bdir$ac_obj.$b_lo $b_c_post" ;;
+-        *.s[)] ac_comp="$b_c_pre $ac_inc $b_c_meta m4_normalize(m4_expand([$3])) -c $ac_srcdir$ac_src -o $ac_bdir$ac_obj.$b_lo $b_c_post" ;;
+-        *.S[)] ac_comp="$b_c_pre $ac_inc $b_c_meta m4_normalize(m4_expand([$3])) -c $ac_srcdir$ac_src -o $ac_bdir$ac_obj.$b_lo $b_c_post" ;;
++        *.s|*.S[)]
++        b_c_meta_clean='$(COMMON_FLAGS) $(CFLAGS_CLEAN)';
++        ac_comp="$b_c_pre $ac_inc $b_c_meta_clean m4_normalize(m4_expand([$3])) -c $ac_srcdir$ac_src -o $ac_bdir$ac_obj.$b_lo $b_c_post" ;;
+         *.cpp|*.cc|*.cxx[)] ac_comp="$b_cxx_pre $ac_inc $b_cxx_meta m4_normalize(m4_expand([$3])) -c $ac_srcdir$ac_src -o $ac_bdir$ac_obj.$b_lo $b_cxx_post" ;;
+       esac
+ 
+@@ -2402,7 +2403,7 @@ AC_CACHE_CHECK([for $1], [php_var],
+   [__builtin_clz], [return $1(1) ? 1 : 0;],
+   [__builtin_clzl], [return $1(1) ? 1 : 0;],
+   [__builtin_clzll], [return $1(1) ? 1 : 0;],
+-  [__builtin_cpu_init], [$1();],
++  [__builtin_cpu_init], [return ($1(), 1) ? 1 : 0;],
+   [__builtin_cpu_supports], [return $1("sse")? 1 : 0;],
+   [__builtin_ctzl], [return $1(2L) ? 1 : 0;],
+   [__builtin_ctzll], [return $1(2LL) ? 1 : 0;],
+diff --git a/ext/standard/base64.c b/ext/standard/base64.c
+index 8d4feee849..3c0b73a213 100644
+--- a/ext/standard/base64.c
++++ b/ext/standard/base64.c
+@@ -403,7 +403,10 @@ ZEND_INTRIN_SSSE3_FUNC_DECL(zend_string *php_base64_encode_ssse3(const unsigned
+ ZEND_INTRIN_SSSE3_FUNC_DECL(zend_string *php_base64_decode_ex_ssse3(const unsigned char *str, size_t length, bool strict));
+ # endif
+ 
++__attribute__((used))
+ zend_string *php_base64_encode_default(const unsigned char *str, size_t length, zend_long flags);
++
++__attribute__((used))
+ zend_string *php_base64_decode_ex_default(const unsigned char *str, size_t length, bool strict);
+ 
+ # if (defined(ZEND_INTRIN_AVX2_FUNC_PROTO) || defined(ZEND_INTRIN_SSSE3_FUNC_PROTO) || defined(BASE64_INTRIN_AVX512_FUNC_PROTO) || defined(BASE64_INTRIN_AVX512_VBMI_FUNC_PROTO))
+diff --git a/ext/standard/string.c b/ext/standard/string.c
+index b15a24a098..457f5833eb 100644
+--- a/ext/standard/string.c
++++ b/ext/standard/string.c
+@@ -3837,6 +3837,8 @@ PHPAPI zend_string *php_addcslashes(zend_string *str, const char *what, size_t w
+ # include "Zend/zend_cpuinfo.h"
+ 
+ ZEND_INTRIN_SSE4_2_FUNC_DECL(zend_string *php_addslashes_sse42(zend_string *str));
++
++__attribute__((used))
+ zend_string *php_addslashes_default(zend_string *str);
+ 
+ # ifdef ZEND_INTRIN_SSE4_2_FUNC_PROTO
+diff --git a/sapi/fuzzer/config.m4 b/sapi/fuzzer/config.m4
+index 21a44cd6d8..0bc19cecf0 100644
+--- a/sapi/fuzzer/config.m4
++++ b/sapi/fuzzer/config.m4
+@@ -42,7 +42,7 @@ if test "$PHP_FUZZER" != "no"; then
+     [AC_MSG_ERROR([Compiler doesn't support -fsanitize=fuzzer-no-link])])
+   ], [
+     FUZZING_LIB=$LIB_FUZZING_ENGINE
+-    FUZZING_CC="$CXX -stdlib=libc++"
++    AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [FUZZING_CC="$CXX -stdlib=libstdc++"], [FUZZING_CC="$CXX"])
+   ])
+   PHP_SUBST([FUZZING_LIB])
+   PHP_SUBST([FUZZING_CC])
