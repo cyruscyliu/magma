@@ -18,6 +18,7 @@ export LIBS="$LIBS -lc++ -lc++abi $FUZZER/repo/utils/aflpp_driver/libAFLDriver.a
 
 # AFL++'s driver is compiled against libc++
 export CXXFLAGS="$CXXFLAGS -stdlib=libc++"
+export LDFLAGS="$LDFLAGS -stdlib=libc++"
 
 # Build the AFL-only instrumented version
 (
