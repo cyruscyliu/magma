@@ -1,3 +1,4 @@
+#ifndef __ASSEMBLER__
 #ifndef CANARY_H_
 #define CANARY_H_
 #ifdef __cplusplus
@@ -21,3 +22,4 @@ extern void magma_log(const char *bug, int condition);
 }
 #endif
 #endif
+#endif /* __ASSEMBLER__ */
