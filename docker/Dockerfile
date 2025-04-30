@@ -55,6 +55,7 @@ RUN ${FUZZER}/preinstall.sh
 USER magma:magma
 RUN ${FUZZER}/fetch.sh
 RUN ${FUZZER}/build.sh
+RUN if [ -f ${FUZZER}/postinstall.sh ]; then /bin/bash ${FUZZER}/postinstall.sh; fi
 
 ARG target_name
 ARG target_path=targets/${target_name}
