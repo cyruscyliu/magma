@@ -17,7 +17,12 @@ fi
 
 mkdir -p "$SHARED/findings"
 
-flag_cmplog=(-m none -c "$OUT/cmplog/$PROGRAM")
+# TODO: Figure out why cmplog gets stuck infinitely on PHP
+if [[ "$TARGET" == */php ]]; then
+    flag_cmplog=()
+else
+    flag_cmplog=(-m none -c "$OUT/cmplog/$PROGRAM")
+fi
 
 export AFL_SKIP_CPUFREQ=1
 export AFL_NO_AFFINITY=1
