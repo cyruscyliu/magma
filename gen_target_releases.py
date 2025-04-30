@@ -10,10 +10,11 @@ import os
 import subprocess
 import sys
 
+from datetime import datetime
+
 subprocess.check_call([sys.executable, "-m", "pip", "install", "gitpython"])
 
-from git import Repo
-from datetime import datetime
+from git import Repo  # noqa: E402
 
 links = {
     "libpng": "https://github.com/pnggroup/libpng.git",
@@ -24,6 +25,7 @@ links = {
     "openssl": "https://github.com/openssl/openssl.git",
     "php": "https://github.com/php/php-src.git",
     "poppler": "https://gitlab.freedesktop.org/poppler/poppler.git",
+    "sqlite3": "https://github.com/sqlite/sqlite",
 }
 
 repos = []
