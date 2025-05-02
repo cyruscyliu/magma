@@ -12,6 +12,8 @@ source "$TARGET"/releases
 
 to_fetch_var="$TARGET_NAME"_"$TARGET_VERSION"
 to_fetch=${!to_fetch_var}
+to_checkout_var="$TARGET_NAME"_"$TARGET_VERSION"_"STABLE_COMMIT"
+to_checkout=${!to_checkout_var}
 
 git_hosts=(
   github.com
@@ -22,7 +24,8 @@ git_hosts=(
 host=$(echo "$to_fetch" | awk -F/ '{print $3}')
 
 if [[ " ${git_hosts[*]} " == *" $host "* ]]; then
-    git clone "$to_fetch" "$TARGET/repo"
+    git clone --no-checkout "$to_fetch" "$TARGET/repo"
+    git -C "$TARGET/repo" checkout "$to_checkout"
 elif [[ "$to_fetch" =~ \.tar\.gz(\?|$) ]]; then
     wget -O "$TARGET"/repo.tar.gz "$to_fetch"
     mkdir "$TARGET"/repo
