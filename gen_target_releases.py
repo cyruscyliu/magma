@@ -31,17 +31,22 @@ links = {
 repos = []
 
 
-def get_tags(repo_url):
+def clone_repo(repo_url):
     repo_name = repo_url.split("/")[-1].replace(".git", "")
     local_path = os.path.join(os.getcwd(), repo_name)
     repos.append(local_path)
 
+    repo = None
     if not os.path.exists(local_path):
         repo = Repo.clone_from(repo_url, local_path)
         print(f"Cloned {repo_url}")
     else:
         repo = Repo(local_path)
 
+    return repo
+
+
+def get_tags(repo):
     # get all tags available
     year_to_tag = {}
     for tag in repo.tags:
@@ -65,14 +70,27 @@ def get_tags(repo_url):
     return year_to_tag_sorted
 
 
+def get_first_commit_of_year(repo, year):
+    since = f"{year}-01-01"
+    until = f"{year}-12-31"
+    commits = list(repo.iter_commits(rev="HEAD", since=since, until=until))
+    return commits[-1].hexsha
+
+
 for target, link in links.items():
     path_to_releases = os.path.join("targets", target, "releases")
 
     if isinstance(link, str):  # git repo
-        year_to_tag = get_tags(link)
-        print(f"Got tags of {target}")
+        repo = clone_repo(link)
+        year_to_tag = get_tags(repo)
+
+        latest_year = max(year_to_tag.keys())
+        stable_hash = get_first_commit_of_year(repo, latest_year)
+
+        print(f"Got tags and latest commit of {target}")
         releases = [
             f'{target}_PIONEER="{link}"\n',
+            f'{target}_PIONEER_STABLE_COMMIT="{stable_hash}"\n',
         ]
         for i in range(2022, 2025):
             releases.append(f'{target}_LEGACY_{i}="{link}"\n')

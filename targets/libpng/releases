@@ -1,4 +1,5 @@
 libpng_PIONEER="https://github.com/pnggroup/libpng.git"
+libpng_PIONEER_STABLE_COMMIT="6f786ff0f6bf4b971a7159d2b4a95e8a0770892f"
 libpng_LEGACY_2022="https://github.com/pnggroup/libpng.git"
 libpng_LEGACY_2022_TAG="v1.6.38"
 libpng_LEGACY_2023="https://github.com/pnggroup/libpng.git"
