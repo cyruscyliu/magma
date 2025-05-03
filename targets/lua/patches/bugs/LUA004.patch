@@ -57,19 +57,19 @@ index 8e3657a9..a4b64532 100644
    if (L->status == LUA_YIELD) {  /* did hook yield? */
      if (counthook)
 diff --git a/ldo.c b/ldo.c
-index 7135079b..2589be9b 100644
+index e9f91384..69edaf3f 100644
 --- a/ldo.c
 +++ b/ldo.c
-@@ -368,7 +368,11 @@ static void rethook (lua_State *L, CallInfo *ci, int nres) {
+@@ -390,7 +390,11 @@ static void rethook (lua_State *L, CallInfo *ci, int nres) {
      int delta = 0;  /* correction for vararg functions */
      int ftransfer;
      if (isLua(ci)) {
 +#ifdef MAGMA_ENABLE_FIXES
        Proto *p = ci_func(ci)->p;
 +#else
-+      Proto *p = clLvalue(s2v(ci->func))->p;
++      Proto *p = clLvalue(s2v(ci->func.p))->p;
 +#endif
-       if (p->is_vararg)
+       if (p->flag & PF_ISVARARG)
          delta = ci->u.l.nextraargs + p->numparams + 1;
      }
 @@ -377,8 +381,13 @@ static void rethook (lua_State *L, CallInfo *ci, int nres) {
@@ -101,18 +101,18 @@ index c5e3b437..07524a8e 100644
  
  
 diff --git a/lstate.h b/lstate.h
-index c1283bb6..bc0eadc4 100644
+index 7f567453..8aec3aa0 100644
 --- a/lstate.h
 +++ b/lstate.h
-@@ -309,6 +309,9 @@ struct lua_State {
-   StkId top;  /* first free slot in the stack */
+@@ -312,6 +312,9 @@ struct lua_State {
+   StkIdRel top;  /* first free slot in the stack */
    global_State *l_G;
    CallInfo *ci;  /* call info for current function */
 +#ifndef MAGMA_ENABLE_FIXES
 +  const Instruction *oldpc;
 +#endif
-   StkId stack_last;  /* end of stack (last element + 1) */
-   StkId stack;  /* stack base */
+   StkIdRel stack_last;  /* end of stack (last element + 1) */
+   StkIdRel stack;  /* stack base */
    UpVal *openupval;  /* list of open upvalues in this stack */
 @@ -320,7 +323,9 @@ struct lua_State {
    volatile lua_Hook hook;
