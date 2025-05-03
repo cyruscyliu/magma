@@ -54,7 +54,7 @@ index aa0ae58e1..7671b6cf2 100644
     }
  
 +#ifdef MAGMA_ENABLE_CANARIES
-+   MAGMA_LOG("PNG002", (image->flags & PNG_IMAGE_FLAG_INVALID) != 0);
++   MAGMA_LOG("%MAGMA_BUG%", (image->flags & PNG_IMAGE_FLAG_INVALID) != 0);
 +#endif
 +
     /* On png_error, return via longjmp, pop the jmpbuf, and free the image. */
