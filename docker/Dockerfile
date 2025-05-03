@@ -68,8 +68,6 @@ RUN mkdir -p ${TARGET} && chown magma:magma ${TARGET}
 COPY --chown=magma:magma ${magma_root}/${target_path} ${TARGET}/
 RUN ${TARGET}/preinstall.sh
 USER magma:magma
-# TODO: Remove the following line once all targets use fetch_target.sh
-# RUN ${TARGET}/fetch.sh
 RUN ${MAGMA}/fetch_target.sh
 # Used to fetch any additional git repos for the target
 RUN if [ -f ${TARGET}/fetch_deps.sh ]; then /bin/bash ${TARGET}/fetch_deps.sh; fi

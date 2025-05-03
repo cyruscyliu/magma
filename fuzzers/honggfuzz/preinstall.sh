@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-# TODO: Ensure that this works for all targets.
 export LLVM_VERSION=16
 
 apt-get update && \

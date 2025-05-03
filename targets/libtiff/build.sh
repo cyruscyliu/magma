@@ -13,8 +13,6 @@ if [ ! -d "$TARGET/repo" ]; then
     exit 1
 fi
 
-# An extra target specific step from previously used libtiff/fetch.sh
-# TODO: Are there any changes to be made in this file?
 cp "$TARGET/src/tiff_read_rgba_fuzzer.cc" \
     "$TARGET/repo/contrib/oss-fuzz/tiff_read_rgba_fuzzer.cc"
 
