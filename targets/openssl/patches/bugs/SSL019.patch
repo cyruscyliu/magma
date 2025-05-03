@@ -1,0 +1,25 @@
+diff --git a/ssl/record/rec_layer_s3.c b/ssl/record/rec_layer_s3.c
+index 0930222edb..22c9e52f46 100644
+--- a/ssl/record/rec_layer_s3.c
++++ b/ssl/record/rec_layer_s3.c
+@@ -791,11 +791,20 @@ int ssl3_read_bytes(SSL *ssl, uint8_t type, uint8_t *recvd_type,
+ 
+             memcpy(buf, &(rr->data[rr->off]), n);
+             buf += n;
++#ifdef MAGMA_ENABLE_FIXES
+             if (peek) {
+                 /* Mark any zero length record as consumed CVE-2016-6305 */
+                 if (rr->length == 0 && !ssl_release_record(s, rr, 0))
+                     return -1;
+             } else {
++#else
++#ifdef MAGMA_ENABLE_CANARIES
++            MAGMA_LOG("%MAGMA_BUG%", MAGMA_AND(peek, \
++                                MAGMA_AND(rr->length == 0, \
++                                          !ssl_release_record(s, rr, 0))));
++#endif
++            if (!peek) {
++#endif
+                 if (!ssl_release_record(s, rr, n))
+                     return -1;
+             }
