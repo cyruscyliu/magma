@@ -45,13 +45,13 @@ index 850eb10..7a89884 100644
          if (colToByte(gray) == 0)
              invert_bits = 0x00;
 diff --git a/poppler/GfxState.h b/poppler/GfxState.h
-index 7a6e4031..caa5c164 100644
+index 6e988fd3..ae25e3fd 100644
 --- a/poppler/GfxState.h
 +++ b/poppler/GfxState.h
-@@ -1192,6 +1192,7 @@ public:
+@@ -1242,6 +1242,7 @@ public:
  
      // Get the color space.
-     GfxColorSpace *getColorSpace() { return colorSpace; }
+     GfxColorSpace *getColorSpace() { return colorSpace.get(); }
 +    GfxColorSpace *getColorSpace2() { return colorSpace2; }
  
      // Get stream decoding info.

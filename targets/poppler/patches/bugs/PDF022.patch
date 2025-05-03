@@ -1,0 +1,29 @@
+diff --git a/poppler/GfxState.cc b/poppler/GfxState.cc
+index aa7b592d..7c863bb5 100644
+--- a/poppler/GfxState.cc
++++ b/poppler/GfxState.cc
+@@ -2665,16 +2665,24 @@ void GfxSeparationColorSpace::getGray(const GfxColor *color, GfxGray *gray) cons
+     GfxColor color2;
+     int i;
+ 
++#ifdef MAGMA_ENABLE_FIXES
+     if (alt->getMode() == csDeviceGray && name->cmp("Black") == 0) {
+         *gray = clip01(gfxColorComp1 - color->c[0]);
+     } else {
++#else
++#ifdef MAGMA_ENABLE_CANARIES
++        MAGMA_LOG("%MAGMA_BUG%", MAGMA_AND(alt->getMode() == csDeviceGray, name->cmp("Black") == 0));
++#endif
++#endif
+         x = colToDbl(color->c[0]);
+         func->transform(&x, c);
+         for (i = 0; i < alt->getNComps(); ++i) {
+             color2.c[i] = dblToCol(c[i]);
+         }
+         alt->getGray(&color2, gray);
++#ifdef MAGMA_ENABLE_FIXES
+     }
++#endif
+ }
+ 
+ void GfxSeparationColorSpace::getRGB(const GfxColor *color, GfxRGB *rgb) const
