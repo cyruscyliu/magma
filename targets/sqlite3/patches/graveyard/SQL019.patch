@@ -1,3 +1,15 @@
+# In this bug, if one passed a huge precision, we would get a correspondingly huge idx and an equally 
+# large loop of while(idx >= 10). 
+# However, in the new code, the rounding logic is moved to sqlite3FpDecode in src/util.c and also isolated
+# from the precision value itself.
+# (https://github.com/sqlite/sqlite/blob/d7324103b196c572a98724a5658970b4000b8c39/src/util.c#L1017)
+# There is no idx = precision; while(idx>=10){} construct in the new floating-point decoder. sqlite3FpDecode
+# uses the iRound and mxRound variables for the rounding process. So, even if precision is huge, iRound is 
+# forced down to 16 or 26, and we you never iterate more than that many digits. Furthermore,  While 
+# szBufNeeded can grow, it only affects allocation size and not the core decode/round performance or buffer safety.
+
+# Therefore the patch is no longer applicable on the current codebase.
+
 diff --git a/src/printf.c b/src/printf.c
 index fc77f68df..a22223d75 100644
 --- a/src/printf.c

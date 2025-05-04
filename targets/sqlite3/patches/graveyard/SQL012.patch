@@ -1,0 +1,42 @@
+# The logic behind this bug is to disable the following guard in the sqlite3Pragma functionality:
+#  - Only set the P5 flag if the last VDBE instruction was an OP_Column; otherwise, leave it unmodified.
+# But in the updated code, in addtion to new logic that handles virtual tables, there is this snippet
+# (https://github.com/sqlite/sqlite/blob/d7324103b196c572a98724a5658970b4000b8c39/src/pragma.c#L1861):
+
+# /* make sure there actually is a real column to fetch before emitting the two preparatory opcodes */
+# if( mxCol>=0 ){
+#   // OP_Column will parse the entire record header, which sanity-checks the blob format 
+#   // and fills the column cache for cursor iDataCur.
+#   sqlite3VdbeAddOp3(v, OP_Column, iDataCur, mxCol, 3);
+#   // sqlite3VdbeTypeofColumn(v,3) emits OP_Typeof, which reads that freshly-cached column into register 
+#   sqlite3VdbeTypeofColumn(v, 3);
+#   // After these two ops, the “last opcode” is always OP_Column.
+# }
+
+# The only time OP_Column ever appears is deep inside the “NaN-fixup” path (p1<0 case), and they no 
+# longer bother checking "did I just emit an OP_Column?" since it is unconditionally emitted.
+
+# Therefore the patch is no longer applicable on the current codebase.
+
+diff --git a/src/pragma.c b/src/pragma.c
+index c5b5bb667..a882e2307 100644
+--- a/src/pragma.c
++++ b/src/pragma.c
+@@ -1645,9 +1645,17 @@ void sqlite3Pragma(
+           if( j==pTab->iPKey ) continue;
+           if( pTab->aCol[j].notNull==0 ) continue;
+           sqlite3ExprCodeGetColumnOfTable(v, pTab, iDataCur, j, 3);
++#ifndef MAGMA_ENABLE_FIXES
++#ifdef MAGMA_ENABLE_CANARIES
++          MAGMA_LOG("%MAGMA_BUG%", sqlite3VdbeGetOp(v,-1)->opcode!=OP_Column);
++#endif
++#else
+           if( sqlite3VdbeGetOp(v,-1)->opcode==OP_Column ){
++#endif
+             sqlite3VdbeChangeP5(v, OPFLAG_TYPEOFARG);
++#ifdef MAGMA_ENABLE_FIXES
+           }
++#endif
+           jmp2 = sqlite3VdbeAddOp1(v, OP_NotNull, 3); VdbeCoverage(v);
+           zErr = sqlite3MPrintf(db, "NULL value in %s.%s", pTab->zName,
+                               pTab->aCol[j].zName);

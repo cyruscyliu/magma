@@ -1,0 +1,21 @@
+diff --git a/src/select.c b/src/select.c
+index cf25c8e678..be9913db44 100644
+--- a/src/select.c
++++ b/src/select.c
+@@ -4431,11 +4431,16 @@ static int flattenSubquery(
+   if( (pSubitem->fg.jointype & (JT_OUTER|JT_LTORJ))!=0 ){
+     if( pSubSrc->nSrc>1                        /* (3a) */
+      || IsVirtual(pSubSrc->a[0].pSTab)         /* (3b) */
++#ifdef MAGMA_ENABLE_FIXES
+      || (p->selFlags & SF_Distinct)!=0         /* (3d) */
++#endif
+      || (pSubitem->fg.jointype & JT_RIGHT)!=0  /* (26) */
+     ){
+       return 0;
+     }
++#ifdef MAGMA_ENABLE_CANARIES
++    MAGMA_LOG("%MAGMA_BUG%", (p->selFlags & SF_Distinct)!=0);
++#endif
+     isOuterJoin = 1;
+   }
+ 
