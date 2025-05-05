@@ -1,0 +1,26 @@
+diff --git a/libtiff/tif_pixarlog.c b/libtiff/tif_pixarlog.c
+index 5ed921eb..956514e4 100644
+--- a/libtiff/tif_pixarlog.c
++++ b/libtiff/tif_pixarlog.c
+@@ -1449,8 +1449,9 @@ static void PixarLogClose(TIFF *tif)
+      * readers that don't know about PixarLog, or how to set
+      * the PIXARLOGDATFMT pseudo-tag.
+      */
+-
+-    if (sp->state & PLSTATE_INIT)
++#ifdef MAGMA_ENABLE_FIXES
++        if (sp->state&PLSTATE_INIT)
++#endif
+     {
+         /* We test the state to avoid an issue such as in
+          * http://bugzilla.maptools.org/show_bug.cgi?id=2604
+@@ -1463,6 +1464,9 @@ static void PixarLogClose(TIFF *tif)
+         td->td_bitspersample = 8;
+         td->td_sampleformat = SAMPLEFORMAT_UINT;
+     }
++#ifdef MAGMA_ENABLE_CANARIES
++    MAGMA_LOG("%MAGMA_BUG%", (sp->state&PLSTATE_INIT) == 0);
++#endif
+ }
+ 
+ static void PixarLogCleanup(TIFF *tif)
