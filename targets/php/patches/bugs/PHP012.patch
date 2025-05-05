@@ -1,0 +1,31 @@
+diff --git a/ext/standard/http_fopen_wrapper.c b/ext/standard/http_fopen_wrapper.c
+index fff6af5e214..9c63f400d3e 100644
+--- a/ext/standard/http_fopen_wrapper.c
++++ b/ext/standard/http_fopen_wrapper.c
+@@ -723,6 +723,7 @@ static php_stream *php_stream_url_wrap_http_ex(php_stream_wrapper *wrapper,
+ 								tmp_line, response_code);
+ 				}
+ 			}
++		#ifdef MAGMA_ENABLE_FIXES
+ 			if (tmp_line_len >= 1 && tmp_line[tmp_line_len - 1] == '\n') {
+ 				--tmp_line_len;
+ 				if (tmp_line_len >= 1 &&tmp_line[tmp_line_len - 1] == '\r') {
+@@ -733,6 +734,18 @@ static php_stream *php_stream_url_wrap_http_ex(php_stream_wrapper *wrapper,
+ 				char *line = php_stream_get_line(stream, NULL, 0, NULL);
+ 				efree(line);
+ 			}
++		#else
++			#ifdef MAGMA_ENABLE_CANARIES
++				MAGMA_LOG("%MAGMA_BUG%", tmp_line_len < 1);
++				MAGMA_LOG("%MAGMA_BUG%", MAGMA_AND(tmp_line_len == 1, tmp_line[tmp_line_len - 1] == '\n'));
++			#endif
++			if (tmp_line[tmp_line_len - 1] == '\n') {
++				--tmp_line_len;
++				if (tmp_line[tmp_line_len - 1] == '\r') {
++					--tmp_line_len;
++				}
++			}
++		#endif
+ 			ZVAL_STRINGL(&http_response, tmp_line, tmp_line_len);
+ 			zend_hash_next_index_insert(Z_ARRVAL_P(response_header), &http_response);
+ 		} else {
