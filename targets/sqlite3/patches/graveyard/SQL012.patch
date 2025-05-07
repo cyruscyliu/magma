@@ -1,3 +1,7 @@
+# Codebase versions used for the following explaination:
+# 1. Old code: sqlite3Pragma in pragma.c (tarball: https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=8c432642572c8c4b)
+# 2. New code: sqlite3Pragma in pragma.c (commit: 66985fb8fff34b7d46980202b9a245f3bb9db26a)
+
 # The logic behind this bug is to disable the following guard in the sqlite3Pragma functionality:
 #  - Only set the P5 flag if the last VDBE instruction was an OP_Column; otherwise, leave it unmodified.
 # But in the updated code, in addtion to new logic that handles virtual tables, there is this snippet
@@ -16,7 +20,7 @@
 # The only time OP_Column ever appears is deep inside the “NaN-fixup” path (p1<0 case), and they no 
 # longer bother checking "did I just emit an OP_Column?" since it is unconditionally emitted.
 
-# Therefore the patch is no longer applicable on the current codebase.
+# Therefore the patch is no longer applicable on the current codebase and cannot be updated without backporting.
 
 diff --git a/src/pragma.c b/src/pragma.c
 index c5b5bb667..a882e2307 100644
