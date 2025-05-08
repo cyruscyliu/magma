@@ -1,3 +1,5 @@
+# This bug is applied on functions that are now deprecated, therefore it does not make sense to include 
+# it in magma anymore since it will likely not be triggered at all by the latest version of libxml2
 --- a/xmlmemory.c
 +++ b/xmlmemory.c
 @@ -172,12 +172,17 @@ xmlMallocLoc(size_t size, const char * file, int line)
