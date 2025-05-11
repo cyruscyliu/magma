@@ -1,0 +1,42 @@
+diff --git a/parser.c b/parser.c
+index ad035f3c..4a438f4b 100644
+--- a/parser.c
++++ b/parser.c
+@@ -3520,6 +3520,7 @@ xmlParseNCNameComplex(xmlParserCtxtPtr ctxt) {
+                     XML_MAX_TEXT_LENGTH :
+                     XML_MAX_NAME_LENGTH;
+     size_t startPosition = 0;
++    const xmlChar *end;
+ 
+     ret.name = NULL;
+     ret.hashValue = 0;
+@@ -3528,6 +3529,7 @@ xmlParseNCNameComplex(xmlParserCtxtPtr ctxt) {
+      * Handler for more complex cases
+      */
+     startPosition = CUR_PTR - BASE_PTR;
++    end = ctxt->input->cur;
+     c = xmlCurrentChar(ctxt, &l);
+     if ((c == ' ') || (c == '>') || (c == '/') || /* accelerators */
+ 	(!xmlIsNameStartChar(ctxt, c) || (c == ':'))) {
+@@ -3539,13 +3541,21 @@ xmlParseNCNameComplex(xmlParserCtxtPtr ctxt) {
+         if (len <= INT_MAX - l)
+ 	    len += l;
+ 	NEXTL(l);
++    end = ctxt->input->cur;
+ 	c = xmlCurrentChar(ctxt, &l);
+     }
+     if (len > maxLength) {
+         xmlFatalErr(ctxt, XML_ERR_NAME_TOO_LONG, "NCName");
+         return(ret);
+     }
++#ifdef MAGMA_ENABLE_FIXES
+     ret = xmlDictLookupHashed(ctxt->dict, (BASE_PTR + startPosition), len);
++#else
++#ifdef MAGMA_ENABLE_CANARIES
++    MAGMA_LOG("%MAGMA_BUG%", (end - len) != (BASE_PTR + startPosition));
++#endif
++    ret = xmlDictLookupHashed(ctxt->dict, (end - len), len);
++#endif
+     if (ret.name == NULL)
+         xmlErrMemory(ctxt);
+     return(ret);

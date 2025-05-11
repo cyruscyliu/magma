@@ -1,13 +1,13 @@
 diff --git a/parser.c b/parser.c
-index 3f31329..4aea5b8 100644
+index ad035f3c..7bbfaa7f 100644
 --- a/parser.c
 +++ b/parser.c
-@@ -8311,10 +8311,20 @@ xmlParseInternalSubset(xmlParserCtxtPtr ctxt) {
+@@ -8385,10 +8385,20 @@ xmlParseInternalSubset(xmlParserCtxtPtr ctxt) {
      /*
       * We should be at the end of the DOCTYPE declaration.
       */
 +#ifdef MAGMA_ENABLE_FIXES
-     if (RAW != '>') {
+     if ((ctxt->wellFormed) && (RAW != '>')) {
  	xmlFatalErr(ctxt, XML_ERR_DOCTYPE_NOT_FINISHED, NULL);
  	return;
      }
