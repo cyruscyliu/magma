@@ -1,0 +1,50 @@
+diff --git a/libtiff/tif_dirwrite.c b/libtiff/tif_dirwrite.c
+index d8844bbd..d91d134d 100644
+--- a/libtiff/tif_dirwrite.c
++++ b/libtiff/tif_dirwrite.c
+@@ -2082,6 +2082,7 @@ static int TIFFWriteDirectoryTagTransferfunction(TIFF *tif, uint32_t *ndir,
+     /* clang-format on */
+ 
+     /* Check for proper number of transferfunctions */
++#ifdef MAGMA_ENABLE_FIXES
+     for (int i = 0; i < n; i++)
+     {
+         if (tif->tif_dir.td_transferfunction[i] == NULL)
+@@ -2092,6 +2093,29 @@ static int TIFFWriteDirectoryTagTransferfunction(TIFF *tif, uint32_t *ndir,
+             return (1); /* Not an error; only tag is not written. */
+         }
+     }
++#else
++    if (n == 3)
++	{
++#ifdef MAGMA_ENABLE_CANARIES
++		MAGMA_LOG("%MAGMA_BUG%", tif->tif_dir.td_transferfunction[2] == NULL);
++#endif
++		if (!_TIFFmemcmp(tif->tif_dir.td_transferfunction[0],
++                         tif->tif_dir.td_transferfunction[2],
++                         m*sizeof(uint16_t)))
++			n=2;
++	}
++	if (n == 2)
++	{
++#ifdef MAGMA_ENABLE_CANARIES
++		MAGMA_LOG("%MAGMA_BUG%", tif->tif_dir.td_transferfunction[1] == NULL);
++#endif
++		if (!_TIFFmemcmp(tif->tif_dir.td_transferfunction[0],
++                         tif->tif_dir.td_transferfunction[1],
++                         m*sizeof(uint16_t)))
++			n=1;
++	}
++#endif
++#ifdef MAGMA_ENABLE_FIXES
+     /*
+      * Check if the table can be written as a single column,
+      * or if it must be written as 3 columns.  Note that we
+@@ -2108,6 +2132,7 @@ static int TIFFWriteDirectoryTagTransferfunction(TIFF *tif, uint32_t *ndir,
+                          m * sizeof(uint16_t)))
+             n = 1;
+     }
++#endif
+     o = _TIFFmallocExt(tif, n * m * sizeof(uint16_t));
+     if (o == NULL)
+     {

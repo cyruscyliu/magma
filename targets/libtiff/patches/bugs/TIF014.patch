@@ -1,0 +1,25 @@
+diff --git a/libtiff/tif_dirread.c b/libtiff/tif_dirread.c
+index cea569d5..0c973c32 100644
+--- a/libtiff/tif_dirread.c
++++ b/libtiff/tif_dirread.c
+@@ -7454,12 +7454,20 @@ static void ChopUpSingleUncompressedStrip(TIFF *tif)
+ 
+     /* If we are going to allocate a lot of memory, make sure that the */
+     /* file is as big as needed */
++#ifdef MAGMA_ENABLE_FIXES
+     if (tif->tif_mode == O_RDONLY && nstrips > 1000000 &&
+         (offset >= TIFFGetFileSize(tif) ||
+          stripbytes > (TIFFGetFileSize(tif) - offset) / (nstrips - 1)))
+     {
+         return;
+     }
++#endif
++#ifdef MAGMA_ENABLE_CANARIES
++        MAGMA_LOG("%MAGMA_BUG%", MAGMA_AND(tif->tif_mode == O_RDONLY, \
++	        MAGMA_AND(nstrips > 1000000, \
++	        MAGMA_OR(offset >= TIFFGetFileSize(tif), \
++	         stripbytes * (nstrips - 1) > (TIFFGetFileSize(tif) - offset)))));
++#endif
+ 
+     allocChoppedUpStripArrays(tif, nstrips, stripbytes, rowsperstrip);
+ }
