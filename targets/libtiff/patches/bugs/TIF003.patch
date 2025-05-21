@@ -13,7 +13,7 @@ index 437c1a05..58c966d8 100644
 +    stripsperplane=((td->td_imagelength+rowsperstrip-1)/rowsperstrip);
 +#endif
 +#ifdef MAGMA_ENABLE_CANARIES
-+    MAGMA_LOG("%MAGMA_BUG%", stripsperplane == 0);
++    MAGMA_LOG("%MAGMA_BUG%", rowsperstrip == 0);
 +#endif
      stripinplane = (strip % stripsperplane);
      if (pplane)
