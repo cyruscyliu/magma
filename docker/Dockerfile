@@ -69,8 +69,6 @@ COPY --chown=magma:magma ${magma_root}/${target_path} ${TARGET}/
 RUN ${TARGET}/preinstall.sh
 USER magma:magma
 RUN ${MAGMA}/fetch_target.sh
-# Used to fetch any additional git repos for the target
-RUN if [ -f ${TARGET}/fetch_deps.sh ]; then /bin/bash ${TARGET}/fetch_deps.sh; fi
 RUN ${MAGMA}/apply_patches.sh
 
 ## Configuration parameters

@@ -13,6 +13,11 @@ if [ ! -d "$TARGET/repo" ]; then
     exit 1
 fi
 
+# The source code of oniguruma is cloned in preinstall.sh. Do a cp + sudo rm
+# over mv so that the script has the correct permissions to build oniguruma.
+cp -r "$TARGET/oniguruma" "$TARGET/repo/oniguruma" && \
+    sudo rm -rf "$TARGET/oniguruma"
+
 cd "$TARGET/repo"
 export ONIG_CFLAGS="-I$PWD/oniguruma/src"
 export ONIG_LIBS="-L$PWD/oniguruma/src/.libs -l:libonig.a"
@@ -32,8 +37,8 @@ export LDFLAGS="$LDFLAGS -pie"
 #build the php library
 ./buildconf
 
-# Note: the acv_cv_func_fork=yes is needed to avoid the fork() 
-# check in configure which fails when using the hongfuzz compiler  
+# Note: the acv_cv_func_fork=yes is needed to avoid the fork()
+# check in configure which fails when using the hongfuzz compiler
 LIB_FUZZING_ENGINE="-Wall" ./configure \
     --disable-all \
     --enable-option-checking=fatal \
