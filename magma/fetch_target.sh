@@ -24,8 +24,11 @@ git_hosts=(
 host=$(echo "$to_fetch" | awk -F/ '{print $3}')
 
 if [[ " ${git_hosts[*]} " == *" $host "* ]]; then
-    git clone --no-checkout "$to_fetch" "$TARGET/repo"
-    git -C "$TARGET/repo" checkout "$to_checkout"
+    git init "$TARGET/repo"
+    cd "$TARGET/repo" && \
+        git remote add origin "$to_fetch" && \
+        git fetch --depth 1 origin "$to_checkout" && \
+        git checkout "$to_checkout"
 elif [[ "$to_fetch" =~ \.tar\.gz(\?|$) ]]; then
     wget -O "$TARGET"/repo.tar.gz "$to_fetch"
     mkdir "$TARGET"/repo
