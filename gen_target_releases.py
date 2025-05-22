@@ -14,7 +14,7 @@ from datetime import datetime
 
 subprocess.check_call([sys.executable, "-m", "pip", "install", "gitpython"])
 
-from git import Repo  # noqa: E402
+from git import Repo  # type: ignore # noqa: E402
 
 links = {
     "libpng": "https://github.com/pnggroup/libpng.git",
