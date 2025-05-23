@@ -6,8 +6,11 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
+# Currently points to the first commit of 2025
+AFLPLUSPLUS_STABLE_HASH=1ddfb1fec2b8aa99886a5de35c07e8f2a7bd8b98
+
 git clone --no-checkout https://github.com/AFLplusplus/AFLplusplus "$FUZZER/repo"
-git -C "$FUZZER/repo" checkout af8c68a774d0271ae6a2145ac566e1c7024e95d5
+git -C "$FUZZER/repo" checkout $AFLPLUSPLUS_STABLE_HASH
 
 # Fix: CMake-based build systems fail with duplicate (of main) or undefined references (of LLVMFuzzerTestOneInput)
 sed -i '{s/^int main/__attribute__((weak)) &/}' $FUZZER/repo/utils/aflpp_driver/aflpp_driver.c
