@@ -4,16 +4,10 @@ set -e
 LLVM_VERSION=16
 
 apt-get update && \
-    apt-get install -y make build-essential wget lsb-release software-properties-common
+    apt-get install -y make build-essential wget git
 
-add-apt-repository ppa:git-core/ppa
-apt-get update && apt-get install -y git
-
-add-apt-repository -y ppa:ubuntu-toolchain-r/test
-wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh
-./llvm.sh $LLVM_VERSION
-
-apt-get install -y libc++-$LLVM_VERSION-dev libc++abi-$LLVM_VERSION-dev
+apt-get install -y clang-$LLVM_VERSION \
+   libc++-$LLVM_VERSION-dev libc++abi-$LLVM_VERSION-dev
 
 update-alternatives \
   --install /usr/lib/llvm              llvm             /usr/lib/llvm-$LLVM_VERSION  20 \
