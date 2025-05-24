@@ -91,6 +91,11 @@ for POC_TARGET in "${POC_TARGETS[@]}"; do
         BUGS=(${BUGS[0]})
     fi
 
+    if [[ -z "${BUGS}" ]]; then
+        echo_time "BUGS for $POC_TARGET is not set or empty. Nothing to do."
+        continue
+    fi
+
     for BUG in "${BUGS[@]}"; do
         export BUG
         
