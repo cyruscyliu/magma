@@ -6,21 +6,8 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
-git clone --no-checkout https://github.com/google/honggfuzz.git "$FUZZER/repo"
-git -C "$FUZZER/repo" checkout fc6b818c1276056bc565d07edec6ada784cd1670
+# Currently points to the first commit of 2025
+HONGGFUZZ_STABLE_HASH=974db6a90f0efcf6b1171cf355a960fed7b1302d
 
-patch -p1 -d "$FUZZER/repo" << EOF
---- a/linux/trace.c
-+++ b/linux/trace.c
-@@ -232,8 +232,8 @@ struct user_regs_struct {
- #endif /* defined(__ANDROID__) */
- 
- #if defined(__clang__)
--_Pragma("clang Diagnostic push\n");
--_Pragma("clang Diagnostic ignored \"-Woverride-init\"\n");
-+_Pragma("clang diagnostic push\n");
-+_Pragma("clang diagnostic ignored \"-Woverride-init\"");
- #endif
- 
- static struct {
-EOF
+git clone --no-checkout https://github.com/google/honggfuzz.git "$FUZZER/repo"
+git -C "$FUZZER/repo" checkout $HONGGFUZZ_STABLE_HASH

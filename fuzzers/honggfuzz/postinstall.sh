@@ -7,10 +7,7 @@ set -e
 # in the preinstall for poppler instead but that could break other fuzzers since this is a honggfuzz specific
 # dependency.
 
-# The REAL problem is ubuntu 18.04, and all these issues will go away after a major migration to 20.04.
-
 export LLVM_VERSION=16
 
-# Required PPA is added in the preinstall.sh script by llvm.sh
 sudo apt-get install -y \
     libclang-rt-$LLVM_VERSION-dev libc++-$LLVM_VERSION-dev libc++abi-$LLVM_VERSION-dev

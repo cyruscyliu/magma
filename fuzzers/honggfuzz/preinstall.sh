@@ -4,13 +4,9 @@ set -e
 export LLVM_VERSION=16
 
 apt-get update && \
-    apt-get install -y make git wget binutils-dev lsb-release libunwind-dev \
-    software-properties-common build-essential libblocksruntime-dev
-
-add-apt-repository -y ppa:ubuntu-toolchain-r/test
-wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh
-./llvm.sh $LLVM_VERSION
-
+    apt-get install -y make git wget binutils-dev build-essential \
+    libblocksruntime-dev libunwind-dev clang-$LLVM_VERSION
+    
 update-alternatives \
     --install /usr/lib/llvm              llvm             /usr/lib/llvm-$LLVM_VERSION  20 \
     --slave   /usr/bin/llvm-config       llvm-config      /usr/bin/llvm-config-$LLVM_VERSION  \
