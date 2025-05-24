@@ -97,3 +97,14 @@ FUZZERS=(afl aflfast moptafl aflplusplus fairfuzz honggfuzz)
 
 # [TARGET_VERSION]: target version to be chosen from its releases file
 TARGET_VERSION=PIONEER
+
+# [POC_MODE]: wether or not to build PoCs for the targets specified in POC_TARGETS
+# This mode will not run fuzzing campaigns, but it will build targets and generate
+# the specified bug PoCs using crash files provided in the target folders.
+# (default: 0)
+# POC_MODE=1
+
+# [POC_TARGETS]: for which targets the PoCs should be built. Specific bug configs
+# can be provided in the pocs/<TARGET>.poc file
+# (default: no targets)
+# POC_TARGETS=(libpng libtiff)

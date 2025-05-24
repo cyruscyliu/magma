@@ -243,6 +243,13 @@ cleanup()
 
 trap cleanup EXIT
 
+# If PoC mode is enabled, only build PoCs for specified targets
+if [ "$POC_MODE" = "1" ]; then
+    cd "$MAGMA/tools/captain/poc" && \
+        . ./run.sh
+    exit 0
+fi
+
 if [ ! -z "$MAGMA_DEBUG" ]; then
     echo_time "Magma debug is enabled. Only the first fuzzer is chosen."
     FUZZERS=(${FUZZERS[0]})
