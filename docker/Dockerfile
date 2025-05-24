@@ -1,4 +1,7 @@
-FROM ubuntu:24.04
+##
+# Stage: build core magma
+##
+FROM ubuntu:24.04 AS magma_core
 
 # TODO remove sudo for user "magma" to avoid unwanted priv escalation from
 # other attack vectors.

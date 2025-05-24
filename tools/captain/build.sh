@@ -43,6 +43,7 @@ fi
 
 set -x
 docker build -t "$IMG_NAME" \
+    --target magma_core \
     --build-arg fuzzer_name="$FUZZER" \
     --build-arg target_name="$TARGET" \
     --build-arg target_version="$TARGET_VERSION" \
