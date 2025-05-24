@@ -8,6 +8,11 @@
 # - env variables and exports from tools/captain/run.sh
 ##
 
+if [[ -z "${POC_TARGETS}" ]]; then
+  echo_time "POC_TARGETS is not set or empty. Nothing to do."
+  exit 0
+fi
+
 CRASH_INPUT="/test/crash_input"
 CRASH_OUTPUT=/test/crash_output
 CRASH_OUTPUT_NULL=/dev/null
