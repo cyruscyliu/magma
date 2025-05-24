@@ -94,3 +94,62 @@ ENV LDFLAGS="-L${OUT} -g"
 RUN ${FUZZER}/instrument.sh
 
 ENTRYPOINT ["/bin/bash", "-c", "${MAGMA}/run.sh"]
+
+
+##
+# Stage: build magma PoCs
+##
+FROM ubuntu:24.04 AS magma_pocs
+
+RUN apt-get update && apt-get install -y sudo g++
+
+ARG magma_root=./
+ARG poc_target_name
+ARG poc_target_version
+ARG poc_bug
+ENV MAGMA_R=/magma
+ENV OUT=/magma_out
+ENV CC=/usr/bin/gcc
+ENV CXX=/usr/bin/g++
+
+# set up user and group
+ARG USER_ID=1001
+ARG GROUP_ID=1001
+
+RUN mkdir -p /home && \
+	groupadd -g ${GROUP_ID} magma && \
+	useradd -l -u ${USER_ID} -K UMASK=0000 -d /home -g magma magma && \
+	chown magma:magma /home
+RUN	echo "magma:amgam" | chpasswd && usermod -a -G sudo magma
+RUN echo "magma ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+RUN mkdir -p ${OUT} && chown magma:magma ${OUT} && chmod 744 ${OUT}
+
+# copy over magma source code
+ARG magma_path=magma
+ENV MAGMA=${MAGMA_R}/${magma_path}
+
+USER root:root
+RUN mkdir -p ${MAGMA} && chown magma:magma ${MAGMA}
+COPY --chown=magma:magma ${magma_root}/${magma_path} ${MAGMA}/
+
+# build a clean install of the target with a specific bug
+ARG target_path=targets/${poc_target_name}
+ENV TARGET_NAME=${poc_target_name}
+ENV TARGET=${MAGMA_R}/${target_path}
+ENV TARGET_VERSION=${poc_target_version}
+ENV BUG_PATH=${TARGET}/patches/bugs/${poc_bug}.patch
+
+USER root:root
+RUN mkdir -p ${TARGET} && chown magma:magma ${TARGET}
+COPY --chown=magma:magma ${magma_root}/${target_path} ${TARGET}/
+RUN ${TARGET}/preinstall.sh
+RUN ${MAGMA}/fetch_target.sh
+RUN ${MAGMA}/apply_patches.sh ${BUG_PATH}
+RUN ${TARGET}/build_poc.sh
+
+# copy over the PoC input
+ARG CRASH_CONTAINER_PATH=/test/crash_input
+ARG CRASH_INPUT_PATH=${magma_root}/${target_path}/pocs/${poc_bug}.crash
+
+COPY --chown=magma:magma ${CRASH_INPUT_PATH} ${CRASH_CONTAINER_PATH}
