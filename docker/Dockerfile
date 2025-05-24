@@ -101,7 +101,7 @@ ENTRYPOINT ["/bin/bash", "-c", "${MAGMA}/run.sh"]
 ##
 FROM ubuntu:24.04 AS magma_pocs
 
-RUN apt-get update && apt-get install -y sudo g++
+RUN apt-get update && apt-get install -y sudo g++ git
 
 ARG magma_root=./
 ARG poc_target_name

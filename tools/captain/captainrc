@@ -107,4 +107,4 @@ TARGET_VERSION=PIONEER
 # [POC_TARGETS]: for which targets the PoCs should be built. Specific bug configs
 # can be provided in the pocs/<TARGET>.poc file
 # (default: no targets)
-# POC_TARGETS=(libpng libtiff)
+# POC_TARGETS=(libpng libsndfile libtiff libxml2 lua openssl php poppler sqlite3)
