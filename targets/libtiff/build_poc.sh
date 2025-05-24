@@ -5,8 +5,7 @@ set -e
 # Globally installs the target in the image
 # Pre-requirements:
 # - env TARGET: path to target work dir
-# - env OUT: path to directory where artifacts are stored
-# - env CC, CXX, FLAGS, LIBS, etc...
+# - env CC, CXX
 ##
 
 if [ ! -d "$TARGET/repo" ]; then
