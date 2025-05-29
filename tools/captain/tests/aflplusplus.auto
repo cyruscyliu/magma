@@ -1,0 +1,24 @@
+###
+## Configuration parameters
+###
+
+source captainrc
+
+WORKDIR=workdir_aflplusplus
+REPEAT=1
+TIMEOUT=10m
+
+
+###
+## Campaigns to run
+###
+
+FUZZERS=(
+    aflplusplus
+)
+
+aflplusplus_TARGETS=(libpng)
+
+###
+## This script should finish in 1*10=10 minutes (one core).
+###

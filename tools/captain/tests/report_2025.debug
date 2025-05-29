@@ -1,0 +1,27 @@
+###
+## Configuration parameters
+###
+
+source captainrc
+
+WORKDIR=workdir_report_2025
+REPEAT=10
+TIMEOUT=24h
+ISAN=1
+MAGMA_DEBUG=1
+
+###
+## Campaigns to run
+###
+
+FUZZERS=(
+    aflplusplus
+    honggfuzz
+    libfuzzer
+)
+
+# By default, all targets (21 programs) will be fuzzed
+
+###
+## This script should finish in 3*21*24 hours (one core).
+###
