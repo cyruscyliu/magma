@@ -1,23 +1,39 @@
+# Codebase versions used for the following explaination:
+# 1. Old code: htmlParseNameComplex() in HTMLparser.c (commit: ec6e3efb06d7b15cf5a2328fabd3845acea4c815)
+# 2. New code: htmlParseData() in HTMLparser.c (commit: 41c10c0cec2ac072897c7d8df0e87fdf4b715586)
+
+# In the old code's name-parser, hitting a non-ASCII character could trigger an encoding switch
+# and buffer reallocation. The if (base != old_base) + recursive call was the only place we ever 
+# restarted the ASCII fast-path, so disabling it re-introduced the "continue with stale pointers" bug.
+
+# In the new unified parser, that same "encoding switch -> must restart locals" logic is centralized 
+# in the goto restart;. Wrapping only the goto restart; under MAGMA_ENABLE_FIXES in theory shoul make
+# the new parser behave just like the old fallback did: it sometimes fails to re-sync after a buffer move, 
+# leading us to scan off the end of a freed chunk.
+
 diff --git a/HTMLparser.c b/HTMLparser.c
-index d6971b5..15da2ae 100644
+index b9e176b3..cd4eace9 100644
 --- a/HTMLparser.c
 +++ b/HTMLparser.c
-@@ -2519,6 +2519,7 @@ htmlParseNameComplex(xmlParserCtxtPtr ctxt) {
- 	len += l;
- 	NEXTL(l);
- 	c = CUR_CHAR(l);
+@@ -2612,6 +2612,7 @@ static xmlChar *
+ htmlParseData(htmlParserCtxtPtr ctxt, htmlAsciiMask mask,
+               int comment, int refs, int maxLength) {
+     xmlParserInputPtr input = ctxt->input;
++    const xmlChar *bug_base = input->base;
+     xmlChar *ret = NULL;
+     xmlChar *buffer;
+     xmlChar utf8Char[4];
+@@ -2807,8 +2808,12 @@ htmlParseData(htmlParserCtxtPtr ctxt, htmlAsciiMask mask,
+                         xmlFree(guess);
+                     }
+                     input->flags |= XML_INPUT_HAS_ENCODING;
+-
 +#ifdef MAGMA_ENABLE_FIXES
- 	if (ctxt->input->base != base) {
- 	    /*
- 	     * We changed encoding from an unknown encoding
-@@ -2526,6 +2527,10 @@ htmlParseNameComplex(xmlParserCtxtPtr ctxt) {
- 	     */
- 	    return(htmlParseNameComplex(ctxt));
- 	}
+                     goto restart;
 +#endif
 +#ifdef MAGMA_ENABLE_CANARIES
-+	MAGMA_LOG("%MAGMA_BUG%", ctxt->input->base != base);
++	MAGMA_LOG("%MAGMA_BUG%", ctxt->input->base != bug_base);
 +#endif
-     }
+                 }
  
-     if (ctxt->input->cur - ctxt->input->base < len) {
+                 size = htmlValidateUtf8(ctxt, in, avail);

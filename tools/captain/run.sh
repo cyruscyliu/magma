@@ -106,9 +106,18 @@ start_campaign()
         mkdir -p "$SHARED" && chmod 777 "$SHARED"
 
         echo_time "Container $FUZZER/$TARGET/$PROGRAM/$ARCID started on CPU $AFFINITY"
-        "$MAGMA"/tools/captain/start.sh &> \
-            "${LOGDIR}/${FUZZER}_${TARGET}_${PROGRAM}_${ARCID}_container.log"
+        if [ ! -z "$MAGMA_DEBUG" ]; then
+            "$MAGMA"/tools/captain/start.sh
+        else
+            "$MAGMA"/tools/captain/start.sh &> \
+                "${LOGDIR}/${FUZZER}_${TARGET}_${PROGRAM}_${ARCID}_container.log"
+        fi
         echo_time "Container $FUZZER/$TARGET/$PROGRAM/$ARCID stopped"
+
+        if [ ! -z "$MAGMA_DEBUG" ]; then
+            echo_time "Magma debug is enabled. Skip to extract the PoC."
+            unset POC_EXTRACT
+        fi
 
         if [ ! -z $POC_EXTRACT ]; then
             "$MAGMA"/tools/captain/extract.sh
@@ -234,11 +243,29 @@ cleanup()
 
 trap cleanup EXIT
 
+# If PoC mode is enabled, only build PoCs for specified targets
+if [ "$POC_MODE" = "1" ]; then
+    cd "$MAGMA/tools/captain/poc" && \
+        . ./run.sh
+    exit 0
+fi
+
+if [ ! -z "$MAGMA_DEBUG" ]; then
+    echo_time "Magma debug is enabled. Only the first fuzzer is chosen."
+    FUZZERS=(${FUZZERS[0]})
+fi
+
 # schedule campaigns
 for FUZZER in "${FUZZERS[@]}"; do
     export FUZZER
 
     TARGETS=($(get_var_or_default $FUZZER 'TARGETS'))
+
+    if [ ! -z "$MAGMA_DEBUG" ]; then
+        echo_time "Magma debug is enabled. Only the first target is chosen."
+        TARGETS=(${TARGETS[0]})
+    fi
+
     for TARGET in "${TARGETS[@]}"; do
         export TARGET
 
@@ -254,15 +281,31 @@ for FUZZER in "${FUZZERS[@]}"; do
         fi
 
         PROGRAMS=($(get_var_or_default $FUZZER $TARGET 'PROGRAMS'))
+
+        if [ ! -z "$MAGMA_DEBUG" ]; then
+            echo_time "Magma debug is enabled. Only the first program is chosen."
+            PROGRAMS=(${PROGRAMS[0]})
+        fi
+
         for PROGRAM in "${PROGRAMS[@]}"; do
             export PROGRAM
             export ARGS="$(get_var_or_default $FUZZER $TARGET $PROGRAM 'ARGS')"
+            
+            if [ ! -z "$MAGMA_DEBUG" ]; then
+                echo_time "Magma debug is enabled. Only the first instance is running."
+                REPEAT=1
+            fi
 
             echo_time "Starting campaigns for $PROGRAM $ARGS"
             for ((i=0; i<$REPEAT; i++)); do
                 export NUMWORKERS="$(get_var_or_default $FUZZER 'CAMPAIGN_WORKERS')"
                 export AFFINITY=$(allocate_workers)
-                start_ex &
+                if [ ! -z "$MAGMA_DEBUG" ]; then
+                    echo_time "Magma debug is enabled. Don't run start_ex as a daemon."
+                    start_ex
+                else
+                    start_ex &
+                fi
             done
         done
     done

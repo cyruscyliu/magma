@@ -1,4 +1,7 @@
-FROM ubuntu:18.04
+##
+# Stage: build core magma
+##
+FROM ubuntu:24.04 AS magma_core
 
 # TODO remove sudo for user "magma" to avoid unwanted priv escalation from
 # other attack vectors.
@@ -11,32 +14,33 @@ RUN apt-get update && apt-get install -y sudo
 ARG magma_root=./
 
 ## Path variables inside the container
-ENV MAGMA_R /magma
-ENV OUT		/magma_out
-ENV SHARED 	/magma_shared
+ENV MAGMA_R=/magma
+ENV OUT=/magma_out
+ENV SHARED=/magma_shared
 
-ENV CC  /usr/bin/gcc
-ENV CXX /usr/bin/g++
-ENV LD /usr/bin/ld
-ENV AR /usr/bin/ar
-ENV AS /usr/bin/as
-ENV NM /usr/bin/nm
-ENV RANLIB /usr/bin/ranlib
+ENV CC=/usr/bin/gcc
+ENV CXX=/usr/bin/g++
+ENV LD=/usr/bin/ld
+ENV AR=/usr/bin/ar
+ENV AS=/usr/bin/as
+ENV NM=/usr/bin/nm
+ENV RANLIB=/usr/bin/ranlib
 
-ARG USER_ID=1000
-ARG GROUP_ID=1000
+ARG USER_ID=1001
+ARG GROUP_ID=1001
 RUN mkdir -p /home && \
 	groupadd -g ${GROUP_ID} magma && \
 	useradd -l -u ${USER_ID} -K UMASK=0000 -d /home -g magma magma && \
 	chown magma:magma /home
 RUN	echo "magma:amgam" | chpasswd && usermod -a -G sudo magma
+RUN echo "magma ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 RUN mkdir -p ${SHARED} ${OUT} && \
 	chown magma:magma ${SHARED} ${OUT} && \
 	chmod 744 ${SHARED} ${OUT}
 
 ARG magma_path=magma
-ENV MAGMA 	${MAGMA_R}/${magma_path}
+ENV MAGMA=${MAGMA_R}/${magma_path}
 USER root:root
 RUN mkdir -p ${MAGMA} && chown magma:magma ${MAGMA}
 COPY --chown=magma:magma ${magma_root}/${magma_path} ${MAGMA}/
@@ -46,7 +50,7 @@ RUN ${MAGMA}/prebuild.sh
 
 ARG fuzzer_name
 ARG fuzzer_path=fuzzers/${fuzzer_name}
-ENV FUZZER 	${MAGMA_R}/${fuzzer_path}
+ENV FUZZER=${MAGMA_R}/${fuzzer_path}
 USER root:root
 RUN mkdir -p ${FUZZER} && chown magma:magma ${FUZZER}
 COPY --chown=magma:magma ${magma_root}/${fuzzer_path} ${FUZZER}/
@@ -54,16 +58,20 @@ RUN ${FUZZER}/preinstall.sh
 USER magma:magma
 RUN ${FUZZER}/fetch.sh
 RUN ${FUZZER}/build.sh
+RUN if [ -f ${FUZZER}/postinstall.sh ]; then /bin/bash ${FUZZER}/postinstall.sh; fi
 
 ARG target_name
 ARG target_path=targets/${target_name}
-ENV TARGET 	${MAGMA_R}/${target_path}
+ENV TARGET_NAME=${target_name}
+ENV TARGET=${MAGMA_R}/${target_path}
+ARG target_version
+ENV TARGET_VERSION=${target_version}
 USER root:root
 RUN mkdir -p ${TARGET} && chown magma:magma ${TARGET}
 COPY --chown=magma:magma ${magma_root}/${target_path} ${TARGET}/
 RUN ${TARGET}/preinstall.sh
 USER magma:magma
-RUN ${TARGET}/fetch.sh
+RUN ${MAGMA}/fetch_target.sh
 RUN ${MAGMA}/apply_patches.sh
 
 ## Configuration parameters
@@ -78,11 +86,70 @@ ARG CANARIES_FLAG=${canaries:+-DMAGMA_ENABLE_CANARIES}
 ARG FIXES_FLAG=${fixes:+-DMAGMA_ENABLE_FIXES}
 ARG BUILD_FLAGS="-include ${MAGMA}/src/canary.h ${CANARIES_FLAG} ${FIXES_FLAG} ${ISAN_FLAG} ${HARDEN_FLAG} -g -O0"
 
-ENV CFLAGS ${BUILD_FLAGS}
-ENV CXXFLAGS ${BUILD_FLAGS}
-ENV LIBS -l:magma.o -lrt
-ENV LDFLAGS -L"${OUT}" -g
+ENV CFLAGS=${BUILD_FLAGS}
+ENV CXXFLAGS=${BUILD_FLAGS}
+ENV LIBS="-l:magma.o -lrt"
+ENV LDFLAGS="-L${OUT} -g"
 
 RUN ${FUZZER}/instrument.sh
 
-ENTRYPOINT "${MAGMA}/run.sh"
+ENTRYPOINT ["/bin/bash", "-c", "${MAGMA}/run.sh"]
+
+
+##
+# Stage: build magma PoCs
+##
+FROM ubuntu:24.04 AS magma_pocs
+
+RUN apt-get update && apt-get install -y sudo g++ git
+
+ARG magma_root=./
+ARG poc_target_name
+ARG poc_target_version
+ARG poc_bug
+ENV MAGMA_R=/magma
+ENV OUT=/magma_out
+ENV CC=/usr/bin/gcc
+ENV CXX=/usr/bin/g++
+
+# set up user and group
+ARG USER_ID=1001
+ARG GROUP_ID=1001
+
+RUN mkdir -p /home && \
+	groupadd -g ${GROUP_ID} magma && \
+	useradd -l -u ${USER_ID} -K UMASK=0000 -d /home -g magma magma && \
+	chown magma:magma /home
+RUN	echo "magma:amgam" | chpasswd && usermod -a -G sudo magma
+RUN echo "magma ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+RUN mkdir -p ${OUT} && chown magma:magma ${OUT} && chmod 744 ${OUT}
+
+# copy over magma source code
+ARG magma_path=magma
+ENV MAGMA=${MAGMA_R}/${magma_path}
+
+USER root:root
+RUN mkdir -p ${MAGMA} && chown magma:magma ${MAGMA}
+COPY --chown=magma:magma ${magma_root}/${magma_path} ${MAGMA}/
+
+# build a clean install of the target with a specific bug
+ARG target_path=targets/${poc_target_name}
+ENV TARGET_NAME=${poc_target_name}
+ENV TARGET=${MAGMA_R}/${target_path}
+ENV TARGET_VERSION=${poc_target_version}
+ENV BUG_PATH=${TARGET}/patches/bugs/${poc_bug}.patch
+
+USER root:root
+RUN mkdir -p ${TARGET} && chown magma:magma ${TARGET}
+COPY --chown=magma:magma ${magma_root}/${target_path} ${TARGET}/
+RUN ${TARGET}/preinstall.sh
+RUN ${MAGMA}/fetch_target.sh
+RUN ${MAGMA}/apply_patches.sh ${BUG_PATH}
+RUN ${TARGET}/build_poc.sh
+
+# copy over the PoC input
+ARG CRASH_CONTAINER_PATH=/test/crash_input
+ARG CRASH_INPUT_PATH=${magma_root}/${target_path}/pocs/${poc_bug}.crash
+
+COPY --chown=magma:magma ${CRASH_INPUT_PATH} ${CRASH_CONTAINER_PATH}

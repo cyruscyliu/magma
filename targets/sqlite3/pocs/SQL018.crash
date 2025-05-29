@@ -1,0 +1,4 @@
+--i) AS (
+  SELECT 0 EXCEPT SELECT 0 ORDER BY 1 COLLATE """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""��""""""""""""""hsql_tert 15.1 {
+  WITH RECURSIVE
+    c(x) AS (VALUES(1) 

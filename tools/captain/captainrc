@@ -65,6 +65,11 @@ POLL=5
 # (default: unset)
 # POC_EXTRACT=1
 
+# [MAGMA_DEBUG]: if set, container entrypoint is switched to a shell. The fuzzer, 
+# target and magma folders are mounted as volumes in a separate workdir. Useful 
+# for investigating build issues.
+# (default: unset)
+# MAGMA_DEBUG=1
 
 ###
 ## Campaigns to run
@@ -89,3 +94,17 @@ FUZZERS=(afl aflfast moptafl aflplusplus fairfuzz honggfuzz)
 
 # [fuzzer_CAMPAIGN_WORKERS]: overrides the global CAMPAIGN_WORKERS setting
 # afl_CAMPAIGN_WORKERS=3
+
+# [TARGET_VERSION]: target version to be chosen from its releases file
+TARGET_VERSION=PIONEER
+
+# [POC_MODE]: wether or not to build PoCs for the targets specified in POC_TARGETS
+# This mode will not run fuzzing campaigns, but it will build targets and generate
+# the specified bug PoCs using crash files provided in the target folders.
+# (default: 0)
+# POC_MODE=1
+
+# [POC_TARGETS]: for which targets the PoCs should be built. Specific bug configs
+# can be provided in the pocs/<TARGET>.poc file
+# (default: no targets)
+# POC_TARGETS=(libpng libsndfile libtiff libxml2 lua openssl php poppler sqlite3)

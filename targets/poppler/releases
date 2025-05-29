@@ -1,0 +1,8 @@
+poppler_PIONEER="https://gitlab.freedesktop.org/poppler/poppler.git"
+poppler_PIONEER_STABLE_COMMIT="221914fb062253b879c9fbf5a58e89330e679313"
+poppler_LEGACY_2022="https://gitlab.freedesktop.org/poppler/poppler.git"
+poppler_LEGACY_2022_TAG="poppler-22.01.0"
+poppler_LEGACY_2023="https://gitlab.freedesktop.org/poppler/poppler.git"
+poppler_LEGACY_2023_TAG="poppler-23.01.0"
+poppler_LEGACY_2024="https://gitlab.freedesktop.org/poppler/poppler.git"
+poppler_LEGACY_2024_TAG="poppler-24.01.0"

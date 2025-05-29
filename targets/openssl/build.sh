@@ -13,7 +13,10 @@ if [ ! -d "$TARGET/repo" ]; then
     exit 1
 fi
 
-# build the libpng library
+# An extra target specific step from previously used openssl/fetch.sh
+cp "$TARGET/src/abilist.txt" "$TARGET/repo/abilist.txt"
+
+# build the openssl library
 cd "$TARGET/repo"
 
 CONFIGURE_FLAGS=""

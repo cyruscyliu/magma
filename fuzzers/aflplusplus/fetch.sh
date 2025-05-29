@@ -6,8 +6,11 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
+# Currently points to the first commit of 2025
+AFLPLUSPLUS_STABLE_HASH=1ddfb1fec2b8aa99886a5de35c07e8f2a7bd8b98
+
 git clone --no-checkout https://github.com/AFLplusplus/AFLplusplus "$FUZZER/repo"
-git -C "$FUZZER/repo" checkout 458eb0813a6f7d63eed97f18696bca8274533123
+git -C "$FUZZER/repo" checkout $AFLPLUSPLUS_STABLE_HASH
 
 # Fix: CMake-based build systems fail with duplicate (of main) or undefined references (of LLVMFuzzerTestOneInput)
 sed -i '{s/^int main/__attribute__((weak)) &/}' $FUZZER/repo/utils/aflpp_driver/aflpp_driver.c
@@ -24,15 +27,15 @@ EOF
 patch -p1 -d "$FUZZER/repo" << EOF
 --- a/utils/aflpp_driver/aflpp_driver.c
 +++ b/utils/aflpp_driver/aflpp_driver.c
-@@ -53,7 +53,7 @@
-   #include "hash.h"
+@@ -65,7 +65,7 @@
  #endif
  
+ // AFL++ shared memory fuzz cases
 -int                   __afl_sharedmem_fuzzing = 1;
 +int                   __afl_sharedmem_fuzzing = 0;
- extern unsigned int * __afl_fuzz_len;
+ extern unsigned int  *__afl_fuzz_len;
  extern unsigned char *__afl_fuzz_ptr;
- 
+
 @@ -111,7 +111,8 @@ extern unsigned int * __afl_fuzz_len;
  __attribute__((weak)) int LLVMFuzzerInitialize(int *argc, char ***argv);
  

@@ -6,5 +6,19 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
-git clone --no-checkout https://github.com/llvm/llvm-project.git "$FUZZER/repo"
-git -C "$FUZZER/repo" checkout 29cc50e17a6800ca75cd23ed85ae1ddf3e3dcc14
+# This fetch script fetches only the compiler-rt source code from the LLVM project which 
+# is much more efficient than cloning the entire LLVM project which takes ~12 minutes.
+# It needs latest git version to support sparse checkout.   
+
+# Currently points to the first commit of 2025
+COMPLIER_RT_STABLE_HASH=4b577830033066cfd1b2acf4fcf39950678b27bd
+
+git clone --depth 1 --filter=blob:none --sparse \
+  https://github.com/llvm/llvm-project.git "$FUZZER/repo"
+
+pushd "$FUZZER/repo"
+git sparse-checkout init --cone
+git sparse-checkout set compiler-rt/lib/fuzzer
+git fetch --depth 1 origin $COMPLIER_RT_STABLE_HASH
+git checkout $COMPLIER_RT_STABLE_HASH
+popd

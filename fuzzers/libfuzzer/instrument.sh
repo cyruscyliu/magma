@@ -17,7 +17,7 @@ export CFLAGS="$CFLAGS -fsanitize=fuzzer-no-link"
 export CXXFLAGS="$CXXFLAGS -fsanitize=fuzzer-no-link"
 export LDFLAGS="$LDFLAGS -fsanitize=fuzzer-no-link"
 
-export LIBS="$LIBS -l:driver.o $OUT/libFuzzer.a -lstdc++"
+export LIBS="$LIBS -l:driver.o $OUT/libFuzzer.a -lc++ -lc++abi"
 
 "$MAGMA/build.sh"
 "$TARGET/build.sh"

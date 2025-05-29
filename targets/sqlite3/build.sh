@@ -30,7 +30,7 @@ export CFLAGS="$CFLAGS -DSQLITE_MAX_LENGTH=128000000 \
 
 "$TARGET/repo"/configure --disable-shared --enable-rtree
 make clean
-make -j$(nproc)
+make -j$(nproc) LDFLAGS.configure="$LIBS $LDFLAGS"
 make sqlite3.c
 
 $CC $CFLAGS -I. \

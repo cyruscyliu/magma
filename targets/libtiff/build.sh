@@ -9,9 +9,12 @@ set -e
 ##
 
 if [ ! -d "$TARGET/repo" ]; then
-    echo "fetch.sh must be executed first."
+    echo "fetch_target.sh must be executed first."
     exit 1
 fi
+
+cp "$TARGET/src/tiff_read_rgba_fuzzer.cc" \
+    "$TARGET/repo/contrib/oss-fuzz/tiff_read_rgba_fuzzer.cc"
 
 WORK="$TARGET/work"
 rm -rf "$WORK"

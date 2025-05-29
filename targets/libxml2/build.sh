@@ -9,7 +9,7 @@ set -e
 ##
 
 if [ ! -d "$TARGET/repo" ]; then
-    echo "fetch.sh must be executed first."
+    echo "fetch_target.sh must be executed first."
     exit 1
 fi
 
@@ -28,5 +28,5 @@ cp xmllint "$OUT/"
 for fuzzer in libxml2_xml_read_memory_fuzzer libxml2_xml_reader_for_file_fuzzer; do
   $CXX $CXXFLAGS -std=c++11 -Iinclude/ -I"$TARGET/src/" \
       "$TARGET/src/$fuzzer.cc" -o "$OUT/$fuzzer" \
-      .libs/libxml2.a $LDFLAGS $LIBS -lz -llzma
+      .libs/libxml2.a $LDFLAGS $LIBS -lz -llzma -include limits
 done

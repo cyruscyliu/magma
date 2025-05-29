@@ -1,0 +1,8 @@
+libtiff_PIONEER="https://gitlab.com/libtiff/libtiff.git"
+libtiff_PIONEER_STABLE_COMMIT="651b14ffa91722bd1815e367c8e7708925057430"
+libtiff_LEGACY_2022="https://gitlab.com/libtiff/libtiff.git"
+libtiff_LEGACY_2022_TAG="v3.4beta018"
+libtiff_LEGACY_2023="https://gitlab.com/libtiff/libtiff.git"
+libtiff_LEGACY_2023_TAG="v4.5.1"
+libtiff_LEGACY_2024="https://gitlab.com/libtiff/libtiff.git"
+libtiff_LEGACY_2024_TAG="v4.7.0"

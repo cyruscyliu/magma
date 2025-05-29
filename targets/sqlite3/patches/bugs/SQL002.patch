@@ -1,20 +1,23 @@
 diff --git a/src/select.c b/src/select.c
-index a9ec1e852..0ce67e935 100644
+index cf25c8e678..53cc27c4cc 100644
 --- a/src/select.c
 +++ b/src/select.c
-@@ -5008,9 +5008,16 @@ static int selectExpander(Walker *pWalker, Select *p){
+@@ -6140,10 +6140,17 @@ static int selectExpander(Walker *pWalker, Select *p){
  
    /* Process NATURAL keywords, and ON and USING clauses of joins.
    */
--  if( pParse->nErr || db->mallocFailed || sqliteProcessJoin(pParse, p) ){
+-  assert( db->mallocFailed==0 || pParse->nErr!=0 );
+-  if( pParse->nErr || sqlite3ProcessJoin(pParse, p) ){
 -    return WRC_Abort;
+-  }
++
 +  if(
 +#ifdef MAGMA_ENABLE_FIXES
-+     pParse->nErr ||
++    pParse->nErr ||
 +#endif
-+     db->mallocFailed || sqliteProcessJoin(pParse, p) ){
++    db->mallocFailed || sqlite3ProcessJoin(pParse, p) ){
 +      return WRC_Abort;
-   }
++    }
 +#ifdef MAGMA_ENABLE_CANARIES
 +  MAGMA_LOG("%MAGMA_BUG%", pParse->nErr);
 +#endif
