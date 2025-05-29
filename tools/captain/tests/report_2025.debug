@@ -23,5 +23,5 @@ FUZZERS=(
 # By default, all targets (21 programs) will be fuzzed
 
 ###
-## This script should finish in 21*24 hours (one core).
+## This script should finish in 3*21*24 hours (one core).
 ###
