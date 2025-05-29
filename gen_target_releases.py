@@ -16,6 +16,10 @@ subprocess.check_call([sys.executable, "-m", "pip", "install", "gitpython"])
 
 from git import Repo  # type: ignore # noqa: E402
 
+START_YEAR = 2022
+# If START_YEAR=2022, END_YEAR year can be 2025, 2028, 2031, etc. in steps of 3.
+END_YEAR = START_YEAR + (((datetime.now().year - START_YEAR) // 3) * 3)
+
 links = {
     "libpng": "https://github.com/pnggroup/libpng.git",
     "libsndfile": "https://github.com/libsndfile/libsndfile.git",
@@ -60,7 +64,7 @@ def get_tags(repo):
 
     # fill the gaps
     last_tag = 0
-    for i in range(min_year, 2025):
+    for i in range(min_year, END_YEAR):
         if i in year_to_tag_sorted:
             last_tag = year_to_tag_sorted[i]
         else:
@@ -92,15 +96,15 @@ for target, link in links.items():
             f'{target}_PIONEER="{link}"\n',
             f'{target}_PIONEER_STABLE_COMMIT="{stable_hash}"\n',
         ]
-        for i in range(2022, 2025):
+        for i in range(START_YEAR, END_YEAR):
             releases.append(f'{target}_LEGACY_{i}="{link}"\n')
             releases.append(f'{target}_LEGACY_{i}_TAG="{year_to_tag[i]}"\n')
     else:  # predefined
         assert isinstance(link, dict)
         releases = [
-            f'{target}_PIONEER="{link[2024]}"\n',
+            f'{target}_PIONEER="{link[END_YEAR]}"\n',
         ]
-        for i in range(2020, 2025):
+        for i in range(START_YEAR, END_YEAR):
             if isinstance(link[i], str):
                 releases.append(f'{target}_LEGACY_{i}="{link[i]}"\n')
             else:  # git repo, + tag or commit
