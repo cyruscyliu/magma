@@ -8,6 +8,7 @@
 # - env OUT: path to directory where artifacts are stored
 # - env PROGRAM: name of program to run (should be found in $OUT)
 # - env ARGS: extra arguments to pass to the program
+# - env SOURCE_COVERAGE: if source-based code coverage is enabled
 ##
 
 export TIMELIMIT=0.1s
@@ -25,5 +26,8 @@ if [ -z "$args" ]; then
     args="'$1'"
 fi
 
+if [ ! -z $SOURCE_COVERAGE ]; then
+    export LD_PRELOAD=$OUT/source_coverage.so
+fi
 timeout -s KILL --preserve-status $TIMELIMIT bash -c \
     "run_limited '$OUT/$PROGRAM' $args"

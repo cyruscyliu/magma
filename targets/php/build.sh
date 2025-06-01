@@ -26,7 +26,7 @@ unset CXXFLAGS
 
 #build the php library
 ./buildconf
-LIB_FUZZING_ENGINE="-Wall" ./configure \
+LIB_FUZZING_ENGINE="-Wall $LIB_FUZZING_ENGINE" ./configure \
     --disable-all \
     --enable-option-checking=fatal \
     --enable-fuzzer \

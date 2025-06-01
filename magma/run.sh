@@ -13,6 +13,7 @@
 # - env TIMEOUT: time to run the campaign
 # - env MAGMA: path to Magma support files
 # + env LOGSIZE: size (in bytes) of log file to generate (default: 1 MiB)
+# - env SOURCE_COVERAGE: if source-based code coverage is enabled
 ##
 
 # set default max log size to 1 MiB
@@ -71,6 +72,7 @@ echo "Campaign launched at $(date '+%F %R')"
 timeout $TIMEOUT "$FUZZER/run.sh" | \
     multilog n2 s$LOGSIZE "$SHARED/log"
 
+chmod o+rx $SHARED/log
 if [ -f "$SHARED/log/current" ]; then
     cat "$SHARED/log/current"
 fi
@@ -78,3 +80,7 @@ fi
 echo "Campaign terminated at $(date '+%F %R')"
 
 kill $(jobs -p)
+
+if [ ! -z $SOURCE_COVERAGE ]; then
+    $MAGMA/coverage.sh
+fi

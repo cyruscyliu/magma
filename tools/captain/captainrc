@@ -65,6 +65,10 @@ POLL=5
 # (default: unset)
 # POC_EXTRACT=1
 
+# [SOURCE_COVERAGE]: if set, instrument the target for the source-based code
+# coverage and obtain the coverage by replaying the corpus (default: unset)
+# SOURCE_COVERAGE=1
+
 
 ###
 ## Campaigns to run

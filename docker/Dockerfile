@@ -13,6 +13,7 @@ ARG magma_root=./
 ## Path variables inside the container
 ENV MAGMA_R /magma
 ENV OUT		/magma_out
+ENV COV		/magma_cov
 ENV SHARED 	/magma_shared
 
 ENV CC  /usr/bin/gcc
@@ -31,9 +32,9 @@ RUN mkdir -p /home && \
 	chown magma:magma /home
 RUN	echo "magma:amgam" | chpasswd && usermod -a -G sudo magma
 
-RUN mkdir -p ${SHARED} ${OUT} && \
-	chown magma:magma ${SHARED} ${OUT} && \
-	chmod 744 ${SHARED} ${OUT}
+RUN mkdir -p ${SHARED} ${OUT} ${COV} && \
+	chown magma:magma ${SHARED} ${OUT} ${COV} && \
+	chmod 744 ${SHARED} ${OUT} ${COV}
 
 ARG magma_path=magma
 ENV MAGMA 	${MAGMA_R}/${magma_path}
@@ -82,6 +83,10 @@ ENV CFLAGS ${BUILD_FLAGS}
 ENV CXXFLAGS ${BUILD_FLAGS}
 ENV LIBS -l:magma.o -lrt
 ENV LDFLAGS -L"${OUT}" -g
+
+ARG source_coverage
+ENV SOURCE_COVERAGE ${source_coverage:+1}
+ENV SOURCE_COVERAGE_FLAGS ${source_coverage:+"-fprofile-instr-generate -fcoverage-mapping"}
 
 RUN ${FUZZER}/instrument.sh
 

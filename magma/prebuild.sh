@@ -5,6 +5,7 @@ set -e
 # Pre-requirements:
 # - env MAGMA: path to Magma support files
 # - env OUT: path to directory where artifacts are stored
+# - env COV: path to directory where artifacts for source-base code coverage are stored
 # - env SHARED: path to directory shared with host (to store results)
 ##
 
@@ -17,3 +18,6 @@ $CC $CFLAGS -g -O0 -D"MAGMA_STORAGE=\"$MAGMA_STORAGE\"" "$MAGMA/src/monitor.c" \
     "$OUT/pre_storage.o" -I "$MAGMA/src/" -o "$OUT/monitor" $LDFLAGS $LIBS
 
 rm "$OUT/pre_storage.o"
+
+$CC $CFLAGS -shared "$MAGMA/src/source_coverage.c" \
+    -fPIC -o $COV/source_coverage.so -ldl
