@@ -5,9 +5,10 @@
 source captainrc
 
 WORKDIR=workdir_report_2025
-REPEAT=10
-TIMEOUT=24h
+REPEAT=1
+TIMEOUT=10m
 ISAN=1
+SOURCE_COVERAGE=1
 MAGMA_DEBUG=1
 
 ###

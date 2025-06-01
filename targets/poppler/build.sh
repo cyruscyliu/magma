@@ -24,9 +24,9 @@ cmake "$TARGET/repo" \
   -DCMAKE_CXX_STANDARD=20 \
   -DCMAKE_CXX_STANDARD_REQUIRED=ON \
   -DCMAKE_CXX_EXTENSIONS=OFF \
-  -DCMAKE_CXX_FLAGS="$CXXFLAGS -stdlib=libc++" \
-  -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS $LIBS -stdlib=libc++" \
-  -DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS $LIBS -stdlib=libc++" \
+  -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
+  -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS $LIBS" \
+  -DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS $LIBS" \
   -DFREETYPE_LIBRARY=/usr/lib/x86_64-linux-gnu/libfreetype.so \
   -DCMAKE_BUILD_TYPE=debug \
   -DBUILD_SHARED_LIBS=OFF \
@@ -50,8 +50,8 @@ cmake "$TARGET/repo" \
 make -j$(nproc) poppler poppler-cpp pdfimages pdftoppm
 
 cp "$WORK/poppler/utils/"{pdfimages,pdftoppm} "$OUT/"
-$CXX $CXXFLAGS -std=c++20 -stdlib=libc++ \
+$CXX $CXXFLAGS -std=c++20 \
     -I"$WORK/poppler/cpp" -I"$TARGET/repo/cpp" \
     "$TARGET/src/pdf_fuzzer.cc" -o "$OUT/pdf_fuzzer" \
     "$WORK/poppler/cpp/libpoppler-cpp.a" "$WORK/poppler/libpoppler.a" "/usr/lib/x86_64-linux-gnu/libfreetype.so" \
-    $LDFLAGS $LIBS -ljpeg -lz -lopenjp2 -lpng -ltiff -llcms2 -lm -lpthread -pthread
+    $LDFLAGS $LIBS $LIB_FUZZING_ENGINE -ljpeg -lz -lopenjp2 -lpng -ltiff -llcms2 -lm -lpthread -pthread

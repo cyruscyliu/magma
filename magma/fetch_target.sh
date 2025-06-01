@@ -37,3 +37,6 @@ else
     echo "Unsupported link: $to_fetch"
     exit
 fi
+
+cp -r "$TARGET"/repo "$COV"/repo
+cp -r "$TARGET"/src "$COV"/src || echo "No such file or directory"

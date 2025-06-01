@@ -34,7 +34,9 @@ export LDLIBS="$LIBS"
     $CFLAGS -fno-sanitize=alignment $CONFIGURE_FLAGS
 
 make -j$(nproc) clean
-make -j$(nproc) LDCMD="$CXX $CXXFLAGS"
+set +e
+make -j$(nproc) -k LDCMD="$CXX $CXXFLAGS" LDFLAGS="$LIB_FUZZING_ENGINE"
+set -e
 
 fuzzers=$(find fuzz -executable -type f '!' -name \*.py '!' -name \*-test '!' -name \*.pl)
 for f in $fuzzers; do

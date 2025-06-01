@@ -19,4 +19,4 @@ export PYTHON_INCLUDE=/
 make -j$(nproc) || exit 1
 make -C utils/aflpp_driver || exit 1
 
-mkdir -p "$OUT/afl" "$OUT/cmplog"
+mkdir -p "$OUT/afl" "$OUT/cmplog" "$COV/afl"
