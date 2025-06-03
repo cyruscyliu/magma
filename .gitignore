@@ -1,2 +1,4 @@
 workdir*
 __pycache__/
+*.pkl
+*.html

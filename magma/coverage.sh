@@ -4,6 +4,7 @@
 # Pre-requirements:
 # - env FUZZER: path to fuzzer work dir
 # - env TARGET: path to target work dir
+# - env MAGMA: path to Magma support files
 # - env SHARED: path to directory shared with host (to store results)
 # - env PROGRAM: name of program to run (should be found in $OUT)
 # - env COV: path to directory where artifacts for source-base code coverage are stored
@@ -22,6 +23,9 @@ for seed in ${seeds[@]}; do
     export OUT=$COV
     $FUZZER/runonce.sh $seed || continue
 done
+
+python3 $MAGMA/coverage_overtime.py $DIRECTORY_TO_SEARCH $COV $COV/$PROGRAM --output $SHARED/coverage_overtime.txt
+chmod o+rx $SHARED/coverage_overtime.txt
 
 export TARGET_NAME=$(basename $TARGET)
 

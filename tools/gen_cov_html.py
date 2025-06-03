@@ -7,9 +7,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 ROOT_DIR = "captain/workdir_report_2025/ar"
-CACHE_PATH = "coverage_data.pkl"
+CACHE_PATH = "final_coverage.pkl"
+COVERAGE_OVERTIME_CACHE_PATH = "coverage_overtime.pkl"
 
 records = []
+records_overtime = []
 
 def load_cov_data():
     # Step 1: Load data into DataFrame
@@ -25,14 +27,16 @@ def load_cov_data():
                     print(f"Failed to obtain coverage reports of {root}")
             except Exception as e:
                 print(f"Failed to extract {tar_path}: {e}")
+        if "coverage-reports.json" in files or "coverage_overtime.txt" in files:
+            try:
+                parts = os.path.normpath(root).split(os.sep)
+                fuzzer, target, program, run = parts[-4:]
+            except ValueError:
+                continue
         if "coverage-reports.json" in files:
             json_path = os.path.join(root, "coverage-reports.json")
             html_path = os.path.join(root, "coverage-reports/index.html")
             parts = os.path.normpath(json_path).split(os.sep)
-            try:
-                fuzzer, target, program, run = parts[-5:-1]
-            except ValueError:
-                continue  # skip non-matching paths
             with open(json_path, "r") as f:
                 try:
                     data = json.load(f)
@@ -50,31 +54,83 @@ def load_cov_data():
                     records.append(record)
                 except Exception as e:
                     print(f"Error parsing {json_path}: {e}")
+        if "coverage_overtime.txt" in files:
+            txt_path = os.path.join(root, "coverage_overtime.txt")
+            try:
+                df = pd.read_csv(txt_path)
+                df["timestamp"] = pd.to_numeric(df["timestamp"], errors="coerce")
+                df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s", errors="coerce")
+                df = df.dropna(subset=["timestamp"])
+
+                df["timestamp"] = df["timestamp"].dt.floor("s")
+                df = df.drop_duplicates(subset="timestamp", keep="last")
+                df = df.sort_values("timestamp").reset_index(drop=True)
+                df = df.ffill()
+
+                start_time = df['timestamp'].iloc[0]
+                df['timestamp'] = (df['timestamp'] - start_time).dt.total_seconds()
+
+                df["fuzzer"] = fuzzer
+                df["target"] = target
+                df["program"] = program
+                df["run"] = run
+                records_overtime.append(df)
+            except Exception as e:
+                print(f"Failed to load {txt_path}: {e}")
 
     df = pd.DataFrame(records)
-    return df
+    df_overtime = pd.concat(records_overtime, ignore_index=True)
+    return df, df_overtime
 
 figures = []
 
-def gen_figures(df: pd.DataFrame):
+
+
+def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
     for (target, program), group in df.groupby(["target", "program"]):
         # 1. Coverage Percentage Figure (Y = percent)
         plot_df = group[["fuzzer", "percent"]].dropna()
-        fig_percent = px.box(
-            plot_df,
-            x="fuzzer",
-            y="percent",
-            points="all",
-        )
+        fig_percent = px.box(plot_df, x="fuzzer", y="percent", points="all")
 
         # 2. Covered Branches Figure (Y = covered)
         plot_df = group[["fuzzer", "covered"]].dropna()
-        fig_covered = px.box(
-            plot_df,
-            x="fuzzer",
-            y="covered",
-            points="all",
-        )
+        fig_covered = px.box(plot_df, x="fuzzer", y="covered", points="all")
+
+        df_overtime = df_overtime[(df_overtime["target"] == target) & (df_overtime["program"] == program)]
+        # 3. Coverage Overtime Figure (Y = percent)
+        fig_percent_overtime = go.Figure()
+        for fuzzer, __group in df_overtime.groupby("fuzzer"):
+            stat = __group.groupby("timestamp")["percent"].agg(["mean", "min", "max"]).reset_index()
+            fig_percent_overtime.add_trace(go.Scatter(
+                x=stat["timestamp"], y=stat["mean"], mode="lines", name=f"{fuzzer} avg", line=dict(width=2)))
+            fig_percent_overtime.add_trace(go.Scatter(
+                x=stat["timestamp"].tolist() + stat["timestamp"][::-1].tolist(),
+                y=stat["max"].tolist() + stat["min"][::-1].tolist(),
+                fill='toself',
+                fillcolor='rgba(0,100,200,0.1)',
+                line=dict(color='rgba(255,255,255,0)'),
+                hoverinfo="skip",
+                name=f"{fuzzer} range",
+                showlegend=False
+            ))
+            fig_percent_overtime.update_layout(xaxis_title="Time")
+        # 4. Covered Branches Figure (Y = covered)
+        fig_covered_overtime = go.Figure()
+        for fuzzer, __group in df_overtime.groupby("fuzzer"):
+            stat = __group.groupby("timestamp")["covered"].agg(["mean", "min", "max"]).reset_index()
+            fig_covered_overtime.add_trace(go.Scatter(
+                x=stat["timestamp"], y=stat["mean"], mode="lines", name=f"{fuzzer} avg", line=dict(width=2)))
+            fig_covered_overtime.add_trace(go.Scatter(
+                x=stat["timestamp"].tolist() + stat["timestamp"][::-1].tolist(),
+                y=stat["max"].tolist() + stat["min"][::-1].tolist(),
+                fill='toself',
+                fillcolor='rgba(0,100,200,0.1)',
+                line=dict(color='rgba(255,255,255,0)'),
+                hoverinfo="skip",
+                name=f"{fuzzer} range",
+                showlegend=False
+            ))
+            fig_covered_overtime.update_layout(xaxis_title="Time")
 
         # Collect both figures for display
         links = group.apply(
@@ -85,6 +141,8 @@ def gen_figures(df: pd.DataFrame):
             "key": f"{target}/{program}",
             "fig_percent": fig_percent.to_html(full_html=False, include_plotlyjs=True),
             "fig_covered": fig_covered.to_html(full_html=False, include_plotlyjs=True),
+            "fig_percent_overtime": fig_percent_overtime.to_html(full_html=False, include_plotlyjs=True),
+            "fig_covered_overtime": fig_covered_overtime.to_html(full_html=False, include_plotlyjs=True),
             "links": links
         })
 
@@ -130,24 +188,26 @@ def plot_figures():
     ]
 
     for fig in figures:
-        html_parts.append(f"<tr><td colspan='2'><h2>{fig['key']}</h2></td></tr>")
+        html_parts.append(f"<tr><td colspan='4'><h2>{fig['key']}</h2></td></tr>")
         html_parts.append("<tr>")
         html_parts.append(f"<td>{fig['fig_percent']}</td>")
         html_parts.append(f"<td>{fig['fig_covered']}</td>")
+        html_parts.append(f"<td>{fig['fig_percent_overtime']}</td>")
+        html_parts.append(f"<td>{fig['fig_covered_overtime']}</td>")
         html_parts.append("</tr>")
-        html_parts.append("<tr><td colspan='2'><ul>")
+        html_parts.append("<tr><td colspan='4'><ul>")
         for link in fig["links"]:
             html_parts.append(f"<li>{link}</li>")
         html_parts.append("</ul></td></tr>")
 
     html_parts.append("</table></body></html>")
 
-    with open("coverage_summary.html", "w") as f:
+    with open("coverage.html", "w") as f:
         f.write("\n".join(html_parts))
     print("HTML report generated.")
 
-def gen_cov_report(df: pd.DataFrame):
-    gen_figures(df)
+def gen_cov_report(df: pd.DataFrame, df_overtime: pd.DataFrame):
+    gen_figures(df, df_overtime)
     plot_figures()
 
 if __name__ == "__main__":
@@ -160,11 +220,13 @@ if __name__ == "__main__":
     if os.path.exists(CACHE_PATH):
         print("Loading cached DataFrame...")
         df = pd.read_pickle(CACHE_PATH)
+        df_overtime = pd.read_pickle(COVERAGE_OVERTIME_CACHE_PATH)
     else:
-        print("Scanning {ROOTD_RI} for coverage-reports.json ...")
-        df = load_cov_data()
+        print(f"Scanning {ROOT_DIR} for coverage-reports.json ...")
+        df, df_overtime = load_cov_data()
         df.to_pickle(CACHE_PATH)
+        df_overtime.to_pickle(COVERAGE_OVERTIME_CACHE_PATH)
         print("Saved DataFrame to cache.")
     
-    gen_cov_report(df)
+    gen_cov_report(df, df_overtime)
 
