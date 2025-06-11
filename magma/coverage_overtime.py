@@ -59,23 +59,32 @@ def parse_coverage_from_json(json_path):
     percent = branches.get("percent", 0.0)
     return covered, percent
 
-def main(corpus_dir, profdata_dir, binary_path, output_txt):
+def main(corpus_dir, profdata_dir, binary_path, output_txt, interval):
     results = []
+    last_sampled_time = 0
+
+    file_infos = []
     for root, _, files in os.walk(profdata_dir):
-        for file in files:
+        for file in sorted(files):
             if file.endswith(".profdata"):
                 profdata_path = os.path.join(root, file)
                 testcase_path = os.path.join(corpus_dir, os.path.splitext(file)[0])
                 timestamp = get_timestamp(testcase_path)
+                file_infos.append((profdata_path, timestamp))
 
+    file_infos.sort(key=lambda x: x[1])
+    for profdata_path, timestamp in file_infos:
+        try:
+            # skip a few and always include the last one
+            if timestamp - last_sampled_time >= interval or timestamp == file_infos[-1][1]:
                 json_output = os.path.splitext(profdata_path)[0] + ".json"
-                try:
-                    profraw_path = merge_profdata_to_profraw(corpus_dir, profdata_path, timestamp);
-                    generate_json_report(profraw_path, binary_path, json_output)
-                    covered, percent = parse_coverage_from_json(json_output)
-                    results.append((timestamp, covered, round(percent, 2)))
-                except Exception as e:
-                    print(f"Error processing {profdata_path}: {e}")
+                profraw_path = merge_profdata_to_profraw(corpus_dir, profdata_path, timestamp);
+                generate_json_report(profraw_path, binary_path, json_output)
+                covered, percent = parse_coverage_from_json(json_output)
+                results.append((timestamp, covered, round(percent, 2)))
+                last_sampled_time = timestamp
+        except Exception as e:
+            print(f"Error processing {profdata_path}: {e}")
 
     with open(output_txt, "w") as out:
         out.write(f"timestamp,covered,percent\n")
@@ -87,7 +96,8 @@ if __name__ == "__main__":
     parser.add_argument("corpus_dir", help="Directory containing test cases")
     parser.add_argument("profdata_dir", help="Directory containing .profdata files")
     parser.add_argument("binary_path", help="Path to the instrumented binary")
+    parser.add_argument("interval", help="Sample every `interval` seconds")
     parser.add_argument("--output", default="coverage_overtime.txt", help="Output summary .txt file")
 
     args = parser.parse_args()
-    main(args.corpus_dir, args.profdata_dir, args.binary_path, args.output)
+    main(args.corpus_dir, args.profdata_dir, args.binary_path, args.output, args.interval)
