@@ -7,7 +7,7 @@ set -e
 ##
 
 mkdir -p $SHARED/corpus
-cp -r $TARGET/corpus/$PROGRAM $SHARED/corpus
+cp -r -p $TARGET/corpus/$PROGRAM $SHARED/corpus
 export DIRECTORY_TO_SEARCH=$SHARED/corpus/$PROGRAM
 chmod -R o+rx $SHARED/corpus/$PROGRAM
 export PATTERN_TO_MATCH="*"
