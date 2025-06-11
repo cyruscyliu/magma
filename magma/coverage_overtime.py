@@ -86,6 +86,8 @@ def main(corpus_dir, profdata_dir, binary_path, output_txt, interval):
         except Exception as e:
             print(f"Error processing {profdata_path}: {e}")
 
+    if len(results) == 0:
+        return
     with open(output_txt, "w") as out:
         out.write(f"timestamp,covered,percent\n")
         for ts, covered, pct in sorted(results, key=lambda x: x[0]):
@@ -96,7 +98,7 @@ if __name__ == "__main__":
     parser.add_argument("corpus_dir", help="Directory containing test cases")
     parser.add_argument("profdata_dir", help="Directory containing .profdata files")
     parser.add_argument("binary_path", help="Path to the instrumented binary")
-    parser.add_argument("interval", help="Sample every `interval` seconds")
+    parser.add_argument("interval", help="Sample every `interval` seconds", type=int)
     parser.add_argument("--output", default="coverage_overtime.txt", help="Output summary .txt file")
 
     args = parser.parse_args()
