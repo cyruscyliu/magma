@@ -24,7 +24,7 @@ for seed in ${seeds[@]}; do
     $FUZZER/runonce.sh $seed || continue
 done
 
-python3 $MAGMA/coverage_overtime.py $DIRECTORY_TO_SEARCH $COV $COV/$PROGRAM --output $SHARED/coverage_overtime.txt
+python3 $MAGMA/coverage_overtime.py $DIRECTORY_TO_SEARCH $COV $COV/$PROGRAM 60 --output $SHARED/coverage_overtime.txt
 chmod o+rx $SHARED/coverage_overtime.txt
 
 export TARGET_NAME=$(basename $TARGET)
