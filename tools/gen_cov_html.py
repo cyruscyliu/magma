@@ -87,6 +87,7 @@ figures = []
 
 
 def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
+    __df_overtime = df_overtime
     for (target, program), group in df.groupby(["target", "program"]):
         # 1. Coverage Percentage Figure (Y = percent)
         plot_df = group[["fuzzer", "percent"]].dropna()
@@ -96,13 +97,13 @@ def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
         plot_df = group[["fuzzer", "covered"]].dropna()
         fig_covered = px.box(plot_df, x="fuzzer", y="covered", points="all")
 
-        df_overtime = df_overtime[(df_overtime["target"] == target) & (df_overtime["program"] == program)]
+        df_overtime = __df_overtime[(__df_overtime["target"] == target) & (__df_overtime["program"] == program)]
         # 3. Coverage Overtime Figure (Y = percent)
         fig_percent_overtime = go.Figure()
         for fuzzer, __group in df_overtime.groupby("fuzzer"):
-            stat = __group.groupby("timestamp")["percent"].agg(["mean", "min", "max"]).reset_index()
+            stat = __group.groupby("timestamp")["percent"].agg(["median", "min", "max"]).reset_index()
             fig_percent_overtime.add_trace(go.Scatter(
-                x=stat["timestamp"], y=stat["mean"], mode="lines", name=f"{fuzzer} avg", line=dict(width=2)))
+                x=stat["timestamp"], y=stat["median"], mode="lines", name=f"{fuzzer} avg", line=dict(width=2)))
             fig_percent_overtime.add_trace(go.Scatter(
                 x=stat["timestamp"].tolist() + stat["timestamp"][::-1].tolist(),
                 y=stat["max"].tolist() + stat["min"][::-1].tolist(),
@@ -117,9 +118,9 @@ def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
         # 4. Covered Branches Figure (Y = covered)
         fig_covered_overtime = go.Figure()
         for fuzzer, __group in df_overtime.groupby("fuzzer"):
-            stat = __group.groupby("timestamp")["covered"].agg(["mean", "min", "max"]).reset_index()
+            stat = __group.groupby("timestamp")["covered"].agg(["median", "min", "max"]).reset_index()
             fig_covered_overtime.add_trace(go.Scatter(
-                x=stat["timestamp"], y=stat["mean"], mode="lines", name=f"{fuzzer} avg", line=dict(width=2)))
+                x=stat["timestamp"], y=stat["median"], mode="lines", name=f"{fuzzer} avg", line=dict(width=2)))
             fig_covered_overtime.add_trace(go.Scatter(
                 x=stat["timestamp"].tolist() + stat["timestamp"][::-1].tolist(),
                 y=stat["max"].tolist() + stat["min"][::-1].tolist(),
