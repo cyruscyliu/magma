@@ -6,8 +6,6 @@ set -e
 # - env SHARED: path to directory shared with host (to store results)
 ##
 
-mkdir -p $SHARED/corpus
-cp -r -p $TARGET/corpus/$PROGRAM $SHARED/corpus
-export DIRECTORY_TO_SEARCH=$SHARED/corpus/$PROGRAM
-chmod -R o+rx $SHARED/corpus/$PROGRAM
+export DIRECTORY_TO_SEARCH=$SHARED/corpus
+chmod -R o+rx $SHARED/corpus
 export PATTERN_TO_MATCH="*"
