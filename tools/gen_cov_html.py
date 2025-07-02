@@ -114,7 +114,7 @@ def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
                 name=f"{fuzzer} range",
                 showlegend=False
             ))
-            fig_percent_overtime.update_layout(xaxis_title="Time")
+            fig_percent_overtime.update_layout(xaxis_title="Time", yaxis_title="percent")
         # 4. Covered Branches Figure (Y = covered)
         fig_covered_overtime = go.Figure()
         for fuzzer, __group in df_overtime.groupby("fuzzer"):
@@ -131,7 +131,7 @@ def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
                 name=f"{fuzzer} range",
                 showlegend=False
             ))
-            fig_covered_overtime.update_layout(xaxis_title="Time")
+            fig_covered_overtime.update_layout(xaxis_title="Time", yaxis_title="covered")
 
         # Collect both figures for display
         links = group.apply(
