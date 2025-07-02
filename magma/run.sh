@@ -47,7 +47,9 @@ fi
 
 # launch the fuzzer in parallel with the monitor
 rm -f "$MONITOR/tmp"*
+shopt -s nullglob
 polls=("$MONITOR"/*)
+shopt -u nullglob
 if [ ${#polls[@]} -eq 0 ]; then
     counter=0
 else
