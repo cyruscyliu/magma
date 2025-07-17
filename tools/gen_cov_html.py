@@ -14,7 +14,7 @@ records = []
 records_overtime = []
 
 
-def load_cov_data():
+def load_cov_data(target_dir: str):
     # Step 1: Load data into DataFrame
     for root, dirs, files in os.walk(ROOT_DIR):
         if "coverage-reports.json" not in files and "ball.tar" in files:
@@ -52,7 +52,8 @@ def load_cov_data():
                         "count": totals["count"],
                         "html_path": html_path,
                     }
-                    records.append(record)
+                    if target_dir == target or target_dir == "all":
+                        records.append(record)
                 except Exception as e:
                     print(f"Error parsing {json_path}: {e}")
         if "coverage_overtime.txt" in files:
@@ -77,7 +78,8 @@ def load_cov_data():
                 df["target"] = target
                 df["program"] = program
                 df["run"] = run
-                records_overtime.append(df)
+                if target_dir == target or target_dir == "all":
+                    records_overtime.append(df)
             except Exception as e:
                 print(f"Failed to load {txt_path}: {e}")
 
@@ -267,6 +269,11 @@ if __name__ == "__main__":
         "--root_dir", help="Root directory containing coverage data", default=ROOT_DIR
     )
     parser.add_argument(
+        "--target",
+        help="Specify one target (default=all)",
+        default="all",
+    )
+    parser.add_argument(
         "--cache", help="Use cached data if available", action="store_true"
     )
     args = parser.parse_args()
@@ -279,7 +286,7 @@ if __name__ == "__main__":
         df_overtime = pd.read_pickle(COVERAGE_OVERTIME_CACHE_PATH)
     else:
         print(f"Scanning {ROOT_DIR} for coverage-reports.json ...")
-        df, df_overtime = load_cov_data()
+        df, df_overtime = load_cov_data(args.target)
         df.to_pickle(CACHE_PATH)
         df_overtime.to_pickle(COVERAGE_OVERTIME_CACHE_PATH)
         print("Saved DataFrame to cache.")
