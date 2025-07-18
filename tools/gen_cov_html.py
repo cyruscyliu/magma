@@ -16,7 +16,7 @@ records_overtime = []
 
 def load_cov_data(target_dir: str):
     # Step 1: Load data into DataFrame
-    for root, dirs, files in os.walk(ROOT_DIR):
+    for root, _, files in os.walk(ROOT_DIR):
         if "coverage-reports.json" not in files and "ball.tar" in files:
             tar_path = os.path.join(root, "ball.tar")
             try:
@@ -83,10 +83,13 @@ def load_cov_data(target_dir: str):
             except Exception as e:
                 print(f"Failed to load {txt_path}: {e}")
 
-    df = pd.DataFrame(records)
-    df_overtime = pd.concat(records_overtime, ignore_index=True)
-    return df, df_overtime
-
+    try:
+        df = pd.DataFrame(records)
+        df_overtime = pd.concat(records_overtime, ignore_index=True)
+        return df, df_overtime
+    except Exception as e:
+        print(f"Error creating DataFrame: {e}. Is the target directory correct?")
+        exit(1)
 
 figures = []
 
@@ -117,7 +120,7 @@ def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
                 go.Scatter(
                     x=stat["timestamp"],
                     y=stat["median"],
-                    mode="lines",
+                    mode="markers" if len(stat["timestamp"]) == 1 else "lines",
                     name=f"{fuzzer} avg",
                     line=dict(width=2),
                 )
@@ -135,7 +138,7 @@ def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
                 )
             )
             fig_percent_overtime.update_layout(
-                xaxis_title="Time", yaxis_title="percent"
+                xaxis_title="Time", yaxis_title="Percent"
             )
         # 4. Covered Branches Figure (Y = covered)
         fig_covered_overtime = go.Figure()
@@ -149,7 +152,7 @@ def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
                 go.Scatter(
                     x=stat["timestamp"],
                     y=stat["median"],
-                    mode="lines",
+                    mode="markers" if len(stat["timestamp"]) == 1 else "lines",
                     name=f"{fuzzer} avg",
                     line=dict(width=2),
                 )
@@ -167,7 +170,7 @@ def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
                 )
             )
             fig_covered_overtime.update_layout(
-                xaxis_title="Time", yaxis_title="covered"
+                xaxis_title="Time", yaxis_title="Covered"
             )
 
         # Collect both figures for display
