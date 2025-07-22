@@ -8,6 +8,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 ROOT_DIR = "captain/workdir_report_2025/ar"
+OUT_FILE = "coverage.html"
 CACHE_PATH = "final_coverage.pkl"
 COVERAGE_OVERTIME_CACHE_PATH = "coverage_overtime.pkl"
 
@@ -249,7 +250,7 @@ def plot_figures():
 
     html_parts.append("</table></body></html>")
 
-    with open("coverage.html", "w") as f:
+    with open(OUT_FILE, "w") as f:
         f.write("\n".join(html_parts))
     print("HTML report generated.")
 
@@ -264,6 +265,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--root_dir", help="Root directory containing coverage data", default=ROOT_DIR
     )
+    parser.add_argument("--out_file", help="Output HTML file name", default=OUT_FILE)
     parser.add_argument(
         "--target",
         help="Specify one or more targets (default=all)",
@@ -276,6 +278,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ROOT_DIR = args.root_dir
+    OUT_FILE = args.out_file
 
     if args.cache and os.path.exists(CACHE_PATH):
         print("Loading cached DataFrame...")
