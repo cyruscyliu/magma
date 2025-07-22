@@ -16,7 +16,7 @@ records_overtime = []
 figures = []
 
 
-def load_cov_data(target_dir: str):
+def load_cov_data(target_dirs: list):
     # Step 1: Load data into DataFrame
     for root, _, files in os.walk(ROOT_DIR):
         if "coverage-reports.json" not in files and "ball.tar" in files:
@@ -54,7 +54,7 @@ def load_cov_data(target_dir: str):
                         "count": totals["count"],
                         "html_path": html_path,
                     }
-                    if target_dir == target or target_dir == "all":
+                    if not len(target_dirs) or target in target_dirs:
                         records.append(record)
                 except Exception as e:
                     print(f"Error parsing {json_path}: {e}")
@@ -80,7 +80,7 @@ def load_cov_data(target_dir: str):
                 df["target"] = target
                 df["program"] = program
                 df["run"] = run
-                if target_dir == target or target_dir == "all":
+                if not len(target_dirs) or target in target_dirs:
                     records_overtime.append(df)
             except Exception as e:
                 print(f"Failed to load {txt_path}: {e}")
@@ -266,8 +266,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--target",
-        help="Specify one target (default=all)",
-        default="all",
+        help="Specify one or more targets (default=all)",
+        nargs="+",
+        default=[],
     )
     parser.add_argument(
         "--cache", help="Use cached data if available", action="store_true"
