@@ -2,6 +2,7 @@ import os
 import json
 import tarfile
 import argparse
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -12,6 +13,7 @@ COVERAGE_OVERTIME_CACHE_PATH = "coverage_overtime.pkl"
 
 records = []
 records_overtime = []
+figures = []
 
 
 def load_cov_data(target_dir: str):
@@ -43,7 +45,7 @@ def load_cov_data(target_dir: str):
                     data = json.load(f)
                     totals = data["data"][0]["totals"]["branches"]
                     record = {
-                        "fuzzer": fuzzer,
+                        "fuzzer": "afl++" if fuzzer == "aflplusplus" else fuzzer,
                         "target": target,
                         "program": program,
                         "run": run,
@@ -74,7 +76,7 @@ def load_cov_data(target_dir: str):
                 start_time = df["timestamp"].iloc[0]
                 df["timestamp"] = (df["timestamp"] - start_time).dt.total_seconds()
 
-                df["fuzzer"] = fuzzer
+                df["fuzzer"] = "afl++" if fuzzer == "aflplusplus" else fuzzer
                 df["target"] = target
                 df["program"] = program
                 df["run"] = run
@@ -91,11 +93,51 @@ def load_cov_data(target_dir: str):
         print(f"Error creating DataFrame: {e}. Is the target directory correct?")
         exit(1)
 
-figures = []
+
+def get_overtime_stats(
+    fuzzer_group: pd.DataFrame, time_grid: np.ndarray, stat_type: str
+):
+    interpolated_runs = []
+    for _, run_group in fuzzer_group.groupby("run"):
+        run_group = run_group.sort_values("timestamp")
+        interp = np.interp(time_grid, run_group["timestamp"], run_group[stat_type])
+        interpolated_runs.append(interp)
+
+    interp_runs_arr = np.array(interpolated_runs)
+    return {
+        "median": np.median(interp_runs_arr, axis=0),
+        "min": np.min(interp_runs_arr, axis=0),
+        "max": np.max(interp_runs_arr, axis=0),
+    }
+
+
+def add_overtime_fuzzer_line(
+    figure: go.Figure, time_grid: np.ndarray, stats: dict, fuzzer: str
+):
+    figure.add_trace(
+        go.Scatter(
+            x=time_grid,
+            y=stats["median"],
+            mode="markers" if len(time_grid) == 1 else "lines",
+            name=f"{fuzzer} avg",
+            line=dict(width=2),
+        )
+    )
+    figure.add_trace(
+        go.Scatter(
+            x=np.concatenate([time_grid, time_grid[::-1]]),
+            y=np.concatenate([stats["min"], stats["max"][::-1]]),
+            fill="toself",
+            fillcolor="rgba(0,100,200,0.1)",
+            line=dict(color="rgba(255,255,255,0)"),
+            hoverinfo="skip",
+            name=f"{fuzzer} range",
+            showlegend=False,
+        )
+    )
 
 
 def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
-    __df_overtime = df_overtime
     for (target, program), group in df.groupby(["target", "program"]):
         # 1. Coverage Percentage Figure (Y = percent)
         plot_df = group[["fuzzer", "percent"]].dropna()
@@ -105,73 +147,24 @@ def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
         plot_df = group[["fuzzer", "covered"]].dropna()
         fig_covered = px.box(plot_df, x="fuzzer", y="covered", points="all")
 
-        df_overtime = __df_overtime[
-            (__df_overtime["target"] == target) & (__df_overtime["program"] == program)
-        ]
-        # 3. Coverage Overtime Figure (Y = percent)
+        df_overtime_program = df_overtime.query(
+            "target == @target and program == @program"
+        )
+        time_grid = np.arange(0, df_overtime_program["timestamp"].max() + 1, 1)
+
         fig_percent_overtime = go.Figure()
-        for fuzzer, __group in df_overtime.groupby("fuzzer"):
-            stat = (
-                __group.groupby("timestamp")["percent"]
-                .agg(["median", "min", "max"])
-                .reset_index()
-            )
-            fig_percent_overtime.add_trace(
-                go.Scatter(
-                    x=stat["timestamp"],
-                    y=stat["median"],
-                    mode="markers" if len(stat["timestamp"]) == 1 else "lines",
-                    name=f"{fuzzer} avg",
-                    line=dict(width=2),
-                )
-            )
-            fig_percent_overtime.add_trace(
-                go.Scatter(
-                    x=stat["timestamp"].tolist() + stat["timestamp"][::-1].tolist(),
-                    y=stat["max"].tolist() + stat["min"][::-1].tolist(),
-                    fill="toself",
-                    fillcolor="rgba(0,100,200,0.1)",
-                    line=dict(color="rgba(255,255,255,0)"),
-                    hoverinfo="skip",
-                    name=f"{fuzzer} range",
-                    showlegend=False,
-                )
-            )
-            fig_percent_overtime.update_layout(
-                xaxis_title="Time", yaxis_title="Percent"
-            )
-        # 4. Covered Branches Figure (Y = covered)
         fig_covered_overtime = go.Figure()
-        for fuzzer, __group in df_overtime.groupby("fuzzer"):
-            stat = (
-                __group.groupby("timestamp")["covered"]
-                .agg(["median", "min", "max"])
-                .reset_index()
-            )
-            fig_covered_overtime.add_trace(
-                go.Scatter(
-                    x=stat["timestamp"],
-                    y=stat["median"],
-                    mode="markers" if len(stat["timestamp"]) == 1 else "lines",
-                    name=f"{fuzzer} avg",
-                    line=dict(width=2),
-                )
-            )
-            fig_covered_overtime.add_trace(
-                go.Scatter(
-                    x=stat["timestamp"].tolist() + stat["timestamp"][::-1].tolist(),
-                    y=stat["max"].tolist() + stat["min"][::-1].tolist(),
-                    fill="toself",
-                    fillcolor="rgba(0,100,200,0.1)",
-                    line=dict(color="rgba(255,255,255,0)"),
-                    hoverinfo="skip",
-                    name=f"{fuzzer} range",
-                    showlegend=False,
-                )
-            )
-            fig_covered_overtime.update_layout(
-                xaxis_title="Time", yaxis_title="Covered"
-            )
+        for fuzzer, fuzzer_group in df_overtime_program.groupby("fuzzer"):
+            # 3. Coverage Overtime Figure (Y = percent)
+            stats_p = get_overtime_stats(fuzzer_group, time_grid, "percent")
+            add_overtime_fuzzer_line(fig_percent_overtime, time_grid, stats_p, fuzzer)
+
+            # 4. Covered Branches Figure (Y = covered)
+            stats_c = get_overtime_stats(fuzzer_group, time_grid, "covered")
+            add_overtime_fuzzer_line(fig_covered_overtime, time_grid, stats_c, fuzzer)
+
+        fig_percent_overtime.update_layout(xaxis_title="Time", yaxis_title="Percent")
+        fig_covered_overtime.update_layout(xaxis_title="Time", yaxis_title="Covered")
 
         # Collect both figures for display
         links = group.apply(
