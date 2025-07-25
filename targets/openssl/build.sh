@@ -26,6 +26,7 @@ fi
 
 # the config script supports env var LDLIBS instead of LIBS
 export LDLIBS="$LIBS"
+export LDFLAGS="$LDFLAGS $LIB_FUZZING_ENGINE"
 
 ./config --debug enable-fuzz-libfuzzer enable-fuzz-afl disable-tests -DPEDANTIC \
     -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION no-shared no-module \
@@ -35,7 +36,7 @@ export LDLIBS="$LIBS"
 
 make -j$(nproc) clean
 set +e
-make -j$(nproc) -k LDCMD="$CXX $CXXFLAGS" LDFLAGS="$LIB_FUZZING_ENGINE"
+make -j$(nproc) -k LDCMD="$CXX $CXXFLAGS"
 set -e
 
 fuzzers=$(find fuzz -executable -type f '!' -name \*.py '!' -name \*-test '!' -name \*.pl)
