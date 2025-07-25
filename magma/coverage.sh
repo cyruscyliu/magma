@@ -29,8 +29,15 @@ chmod o+rx $SHARED/coverage_overtime.txt
 
 export TARGET_NAME=$(basename $TARGET)
 
+# filter valid profdata files before merging 
+VALID_PROFDATA=()
+for f in "$COV"/*.profdata; do
+    if llvm-profdata show "$f" > /dev/null 2>&1; then
+        VALID_PROFDATA+=("$f")
+    fi
+done
 # merge
-llvm-profdata merge -output=$COV/$TARGET_NAME.profraw $COV/*.profdata
+llvm-profdata merge -output=$COV/$TARGET_NAME.profraw "${VALID_PROFDATA[@]}"
 # show
 llvm-cov show -format=html -output-dir=$SHARED/coverage-reports \
     -instr-profile $COV/$TARGET_NAME.profraw $COV/$PROGRAM

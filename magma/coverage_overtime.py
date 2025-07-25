@@ -8,6 +8,18 @@ def get_timestamp(filepath):
     return os.path.getmtime(filepath)
 
 
+def is_valid_profdata(filepath):
+    try:
+        result = subprocess.run(
+            ["llvm-profdata", "show", filepath],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
 def merge_profdata_to_profraw(corpus_dir, profdata_path, timestamp):
     """
     Given a single .profdata file, find all .profdata files in the same directory
@@ -18,13 +30,16 @@ def merge_profdata_to_profraw(corpus_dir, profdata_path, timestamp):
     target_name = os.path.splitext(os.path.basename(profdata_path))[0]
     profraw_path = os.path.join(cov_dir, f"{target_name}.profraw")
 
-    # Collect all profdata files up to current timestamp
-    profdata_files = [
-        os.path.join(cov_dir, f"{f}.profdata")
-        for f in os.listdir(corpus_dir)
-        if os.path.exists(os.path.join(cov_dir, f"{f}.profdata"))
-        and os.path.getmtime(os.path.join(corpus_dir, f)) <= timestamp
-    ]
+    # Collect all valid profdata files up to current timestamp
+    profdata_files = []
+    for f in os.listdir(corpus_dir):
+        path = os.path.join(cov_dir, f"{f}.profdata")
+        if (
+            os.path.exists(path)
+            and os.path.getmtime(os.path.join(corpus_dir, f)) <= timestamp
+        ):
+            if is_valid_profdata(path):
+                profdata_files.append(path)
     assert profdata_path in profdata_files
 
     if not profdata_files:
