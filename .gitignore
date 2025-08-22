@@ -1,4 +1,5 @@
 workdir*
 __pycache__/
+cov_out/
 *.pkl
 *.html

@@ -1,5 +1,15 @@
+# for benchd and report_df
 pandas>=1.1.0
+
+# for benchd
 lifelines>=0.25.2
+
+# for report_df
 scipy>=1.4.1
 seaborn>=0.11.0
 scikit-posthocs>=0.6.4
+
+# for gen_cov_html
+plotly>=6.2.0
+numpy>=2.3.1
+kaleido>=1.0.0
