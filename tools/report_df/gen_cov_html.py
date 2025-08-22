@@ -2,15 +2,21 @@ import os
 import json
 import tarfile
 import argparse
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-ROOT_DIR = "captain/workdir_report_2025/ar"
-OUT_FILE = "coverage.html"
-CACHE_PATH = "final_coverage.pkl"
-COVERAGE_OVERTIME_CACHE_PATH = "coverage_overtime.pkl"
+ROOT_DIR = "../captain/workdir_report_2025/ar"
+OUT_DIR = "cov_out"
+OUT_FILE = f"{OUT_DIR}/coverage.html"
+CACHE_PATH = f"{OUT_DIR}/final_coverage.pkl"
+COVERAGE_OVERTIME_CACHE_PATH = f"{OUT_DIR}/coverage_overtime.pkl"
+
+IMG_DIR = f"{OUT_DIR}/assets"
+IMG_FMT = "svg"
 
 records = []
 records_overtime = []
@@ -138,6 +144,14 @@ def add_overtime_fuzzer_line(
     )
 
 
+def fig_to_img_tag(fig: go.Figure, name: str) -> str:
+    safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in name)
+    out_path = os.path.join(IMG_DIR, f"{safe}.{IMG_FMT}")
+    fig.write_image(out_path, format=IMG_FMT, scale=2)
+    out_path = out_path.replace(f"{OUT_DIR}/", "")
+    return f'<img src="{out_path}" alt="{safe}" style="width:100%;max-width:100%;">'
+
+
 def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
     for (target, program), group in df.groupby(["target", "program"]):
         # 1. Coverage Percentage Figure (Y = percent)
@@ -173,30 +187,39 @@ def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
             axis=1,
         ).tolist()
 
+        base = f"{target}_{program}"
+        img_percent = fig_to_img_tag(fig_percent, f"{base}_percent_box")
+        img_covered = fig_to_img_tag(fig_covered, f"{base}_covered_box")
+
+        if not df_overtime_program.empty and pd.notna(
+            df_overtime_program["timestamp"].max()
+        ):
+            img_percent_overtime = fig_to_img_tag(
+                fig_percent_overtime, f"{base}_percent_overtime"
+            )
+            img_covered_overtime = fig_to_img_tag(
+                fig_covered_overtime, f"{base}_covered_overtime"
+            )
+        else:
+            img_percent_overtime = "<em>No overtime data</em>"
+            img_covered_overtime = "<em>No overtime data</em>"
+
         figures.append(
             {
                 "key": f"{target}/{program}",
-                "fig_percent": fig_percent.to_html(
-                    full_html=False, include_plotlyjs=True
-                ),
-                "fig_covered": fig_covered.to_html(
-                    full_html=False, include_plotlyjs=True
-                ),
-                "fig_percent_overtime": fig_percent_overtime.to_html(
-                    full_html=False, include_plotlyjs=True
-                ),
-                "fig_covered_overtime": fig_covered_overtime.to_html(
-                    full_html=False, include_plotlyjs=True
-                ),
+                "fig_percent": img_percent,
+                "fig_covered": img_covered,
+                "fig_percent_overtime": img_percent_overtime,
+                "fig_covered_overtime": img_covered_overtime,
                 "links": links,
             }
         )
+        print(f"Generated figures for {target}/{program} with {len(group)} runs.")
 
 
 def plot_figures():
     html_parts = [
         "<html><head><title>Coverage Summary</title>",
-        '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>',
         """
         <style>
             table {
@@ -260,8 +283,21 @@ def gen_cov_report(df: pd.DataFrame, df_overtime: pd.DataFrame):
     plot_figures()
 
 
+def init_dirs():
+    out_dir = Path(OUT_DIR)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    img_dir = Path(IMG_DIR)
+    img_dir.mkdir(parents=True, exist_ok=True)
+    for ext in ("*.png", "*.svg"):
+        for f in img_dir.glob(ext):
+            f.unlink()
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate HTML coverage report.")
+    parser = argparse.ArgumentParser(
+        description="Generate HTML coverage report.(Google chrome or chromium is needed to export images.)"
+    )
     parser.add_argument(
         "--root_dir", help="Root directory containing coverage data", default=ROOT_DIR
     )
@@ -279,6 +315,8 @@ if __name__ == "__main__":
 
     ROOT_DIR = args.root_dir
     OUT_FILE = args.out_file
+
+    init_dirs()
 
     if args.cache and os.path.exists(CACHE_PATH):
         print("Loading cached DataFrame...")
