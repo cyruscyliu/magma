@@ -32,6 +32,14 @@
     </ul>
 </div>
 
+<div class="section">
+<h1>Coverage Report</h1>
+<p>Detailed code coverage analysis across all fuzzing campaigns:</p>
+<ul id="target-list" class="browser-default">
+  <li><a href="cov/coverage.html">Coverage Reports</a></li>
+</ul>
+</div>
+
 <!--
 EXPERIMENT PARAMETERS WILL BE LISTED HERE
 -->
