@@ -20,7 +20,11 @@ def average_time_to_metric_data(bd,metric) :
 
     #Select only bugs that satisfy the metric and then calculate the mean time by grouping
     df = bd.get_frame()
-    average_time = df.iloc[df.index.get_level_values('Metric') == metric].mean(level=['Fuzzer','Target','Program'])
+    df_sel = df.loc[df.index.get_level_values('Metric') == metric]
+    average_time = (
+        df_sel.groupby(level=['Fuzzer', 'Target', 'Program'])['Time'].mean()
+    )
+    
     return average_time
 
 def expected_time_to_trigger_data(bd) :
@@ -141,7 +145,7 @@ def unique_bugs_per_target_data(bd, metric):
             return ss.mannwhitneyu(fuzzer_data[f1],fuzzer_data[f2], alternative='two-sided').pvalue
 
     df = bd.frame
-    df = df.iloc[df.index.get_level_values('Metric') == metric]
+    df = df.loc[df.index.get_level_values('Metric') == metric]
     #Extract the number of unique bugs per campaign
     unique_bugs = df.reset_index().groupby(['Fuzzer','Target','Campaign'])['BugID'].nunique()
     #Unstack and stack back to fill the missing campaign values in case there is
@@ -175,7 +179,7 @@ def number_of_unique_bugs_found_data(bd):
 
     df = bd.frame
     #Extracting all found bugs
-    df_triggered = df.iloc[df.index.get_level_values('Metric') == Metric.TRIGGERED.value]
+    df_triggered = df.loc[df.index.get_level_values('Metric') == Metric.TRIGGERED.value]
     #Reseting the index is necessary to get the number of unique bugs triggered by each fuzzer
     num_trigg = df_triggered.reset_index().groupby(['Fuzzer'])['BugID'].nunique().to_frame()
     num_trigg.columns = ['Bugs']
@@ -203,7 +207,7 @@ def bug_list(bd,fuzzer,target,metric):
 
     df = bd.get_frame()
     #Extracting the bug fullfilling the metric by putting there metric times into a list
-    df_bugs = df.iloc[df.index.get_level_values('Metric') == metric]
+    df_bugs = df.loc[df.index.get_level_values('Metric') == metric]
     df_bugs = df_bugs.loc[fuzzer,target].groupby('BugID')['Time'].apply(list)
     #Preparing the new index to be the bugs
     index = df_bugs.index.tolist()
@@ -232,7 +236,7 @@ def line_plot_data(bd,target,metric) :
         """
 
         #Extracting data for the correct fuzzer
-        df_fuzz = campaigns.iloc[campaigns.index.get_level_values('Fuzzer') == fuzzer]
+        df_fuzz = campaigns.loc[campaigns.index.get_level_values('Fuzzer') == fuzzer]
 
         campaigns_data = df_fuzz.groupby(['Campaign'])['Time'].apply(lambda x : sorted(list(x)))
         num_campaigns = len(campaigns_data.index)
@@ -251,8 +255,8 @@ def line_plot_data(bd,target,metric) :
 
 
     df = bd.get_frame()
-    df_metric = df.iloc[df.index.get_level_values('Metric') == metric]
-    df_lib = df_metric.iloc[df_metric.index.get_level_values('Target') == target]
+    df_metric = df.loc[df.index.get_level_values('Metric') == metric]
+    df_lib = df_metric.loc[df_metric.index.get_level_values('Target') == target]
 
     #For each unique BugID in each campaign in multiple Programs, only retain the smallest time to metric
     df_lib = df_lib.groupby(['Fuzzer','Target','Campaign','BugID']).min()
@@ -310,7 +314,7 @@ def bug_survival_data(bd):
                     'Metric': metric,
                     'BugID': bug
                 })
-                group = group.append(new_row, ignore_index=True)
+                group = pd.concat([group, new_row.to_frame().T], ignore_index=True)
             return group
 
         name = group.name
@@ -329,7 +333,7 @@ def bug_survival_data(bd):
                     'Metric': 'triggered'
                 }),
             ]
-            group = group.append(new_rows, ignore_index=True)
+            group = pd.concat([group, pd.DataFrame(new_rows)], ignore_index=True)
 
         group = group.groupby('Fuzzer').apply(fillmissing, name).reset_index(drop=True)
 

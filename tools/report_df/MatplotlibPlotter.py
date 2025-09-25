@@ -39,7 +39,7 @@ def expected_time_to_trigger(bd, outdir):
     fuzzer_label = list(ett.columns)
     bug_label  = list(ett.index)
     annotations = ett.copy()
-    annotations[fuzzer_label] = annotations[fuzzer_label].applymap(lambda x: pp_time(x))
+    annotations[fuzzer_label] = annotations[fuzzer_label].map(pp_time)
     fig, ax = plt.subplots(figsize=(10,10))
     plt.yticks(rotation=0)
     #Norm factor has to been precomputed
@@ -303,13 +303,21 @@ def bug_survival_plots(bd, outdir):
     agg.columns = pd.MultiIndex.from_product([['Aggregate'], [Metric.REACHED.value, Metric.TRIGGERED.value]])
     means = means.join(agg)
 
-    means = means.stack() \
-                 .sort_values(
-                    by='Fuzzer',
-                    ascending=False,
-                    axis='columns',
-                    key=lambda idx: [means[(f, Metric.TRIGGERED.value)][means[(f, Metric.TRIGGERED.value)] < bd.duration].count() for f in idx]) \
-                 .unstack()
+    stacked = means.stack()
+
+    def _sort_key(cols):
+        out = []
+        for f in cols:
+            if f == 'Aggregate':
+                out.append((-1,))
+            else:
+                cnt = (means[(f, Metric.TRIGGERED.value)] < bd.duration).sum()
+                out.append((cnt,))
+        return out
+
+    stacked = stacked.sort_index(axis='columns', key=_sort_key, ascending=False)
+    means = stacked.unstack()
+
     means.sort_values(by=('Aggregate', Metric.TRIGGERED.value), inplace=True)
 
     means.drop(columns='Aggregate', level=0, inplace=True)
@@ -390,17 +398,17 @@ def bug_survival_plots(bd, outdir):
     hiliter.template = style_tpl
     heatmap.template = style_tpl
 
-    table_html = re.sub(r'colspan=(\d+)', r'colspan="\1"', styler.render())
+    table_html = re.sub(r'colspan=(\d+)', r'colspan="\1"', styler.to_html())
     table_name, path = output(outdir, 'data', 'mean_survival.html')
     with open(path, 'w') as f:
         f.write(table_html)
 
-    hiliter_css = '\n'.join(hiliter.render().split('\n')[1:-1]) + '}'
+    hiliter_css = '\n'.join(hiliter.to_html().split('\n')[1:-1]) + '}'
     hiliter_name, path = output(outdir, 'css', 'survival_hiliter.css')
     with open(path, 'w') as f:
         f.write(hiliter_css)
 
-    heatmap_css = '\n'.join(heatmap.render().split('\n')[1:-1]) + '}'
+    heatmap_css = '\n'.join(heatmap.to_html().split('\n')[1:-1]) + '}'
     heatmap_name, path = output(outdir, 'css', 'survival_heatmap.css')
     with open(path, 'w') as f:
         f.write(heatmap_css)
