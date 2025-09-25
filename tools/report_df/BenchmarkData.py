@@ -67,7 +67,7 @@ class BenchmarkData:
 
         # save configuration parameters
         self._config = json_data.get('config', {})
-        self._version = json_data.get('version', 'v1.0')
+        self._version = json_data.get('version', 'v1.3')
 
     @property
     def frame(self):
