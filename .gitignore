@@ -1,5 +1,7 @@
 workdir*
 __pycache__/
+tools/benchd/*.json
+tools/report_df/out/
 cov_out/
 *.pkl
 *.html
