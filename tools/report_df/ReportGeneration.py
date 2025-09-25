@@ -55,6 +55,7 @@ def generate_report(bd, outdir, report_title="Report", **kwargs):
     ensure_dir(os.path.join(outdir, 'plot'))
     ensure_dir(os.path.join(outdir, 'fuzzers'))
     ensure_dir(os.path.join(outdir, 'targets'))
+    ensure_dir(os.path.join(outdir, 'cov'))
 
     boxplots = MatplotlibPlotter.bug_metric_boxplot(bd, outdir)
     uniq_bugs, sigmatrix = MatplotlibPlotter.unique_bugs_per_target(bd, outdir, Metric.TRIGGERED.value)

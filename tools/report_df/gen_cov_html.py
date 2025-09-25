@@ -9,11 +9,13 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-ROOT_DIR = "../captain/workdir_report_2025/ar"
-OUT_DIR = "cov_out"
+ROOT_DIR = "../captain/workdir/ar"
+OUT_DIR = "out/cov"
 OUT_FILE = f"{OUT_DIR}/coverage.html"
+USE_CACHE = False
 CACHE_PATH = f"{OUT_DIR}/final_coverage.pkl"
 COVERAGE_OVERTIME_CACHE_PATH = f"{OUT_DIR}/coverage_overtime.pkl"
+TARGETS = []
 
 IMG_DIR = f"{OUT_DIR}/assets"
 IMG_FMT = "svg"
@@ -294,7 +296,7 @@ def init_dirs():
             f.unlink()
 
 
-if __name__ == "__main__":
+def get_args():
     parser = argparse.ArgumentParser(
         description="Generate HTML coverage report.(Google chrome or chromium is needed to export images.)"
     )
@@ -306,27 +308,40 @@ if __name__ == "__main__":
         "--target",
         help="Specify one or more targets (default=all)",
         nargs="+",
-        default=[],
+        default=TARGETS,
     )
     parser.add_argument(
-        "--cache", help="Use cached data if available", action="store_true"
+        "--cache",
+        help="Use cached data if available",
+        action="store_true",
+        default=USE_CACHE,
     )
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    ROOT_DIR = args.root_dir
-    OUT_FILE = args.out_file
 
+def cov_main():
     init_dirs()
 
-    if args.cache and os.path.exists(CACHE_PATH):
+    if USE_CACHE and os.path.exists(CACHE_PATH):
         print("Loading cached DataFrame...")
         df = pd.read_pickle(CACHE_PATH)
         df_overtime = pd.read_pickle(COVERAGE_OVERTIME_CACHE_PATH)
     else:
         print(f"Scanning {ROOT_DIR} for coverage-reports.json ...")
-        df, df_overtime = load_cov_data(args.target)
+        df, df_overtime = load_cov_data(TARGETS)
         df.to_pickle(CACHE_PATH)
         df_overtime.to_pickle(COVERAGE_OVERTIME_CACHE_PATH)
         print("Saved DataFrame to cache.")
 
     gen_cov_report(df, df_overtime)
+
+
+if __name__ == "__main__":
+    args = get_args()
+
+    ROOT_DIR = args.root_dir
+    OUT_FILE = args.out_file
+    USE_CACHE = args.cache
+    TARGETS = args.target
+
+    cov_main()

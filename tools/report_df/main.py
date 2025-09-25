@@ -6,6 +6,7 @@ import MatplotlibPlotter
 from BenchmarkData import BenchmarkData
 import DataProcessing
 from ReportGeneration import generate_report
+from gen_cov_html import cov_main
 import argparse
 import logging
 
@@ -39,6 +40,10 @@ def main():
     args = parse_args()
     configure_verbosity(args.verbose)
     bd = BenchmarkData(args.json, config={'duration': 7 * 24 * 60 * 60, 'trials': 10})
+    
+    # Generate coverage reports
+    cov_main()
+    # Generate main reports
     generate_report(bd, args.outdir)
 
 if __name__ == '__main__':
