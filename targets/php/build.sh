@@ -39,7 +39,7 @@ export LDFLAGS="$LDFLAGS -pie"
 
 # Note: the acv_cv_func_fork=yes is needed to avoid the fork()
 # check in configure which fails when using the hongfuzz compiler
-LIB_FUZZING_ENGINE="-Wall" ./configure \
+LIB_FUZZING_ENGINE="-Wall $LIB_FUZZING_ENGINE" ./configure \
     --disable-all \
     --enable-option-checking=fatal \
     --enable-fuzzer \

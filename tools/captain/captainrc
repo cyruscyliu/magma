@@ -65,6 +65,10 @@ POLL=5
 # (default: unset)
 # POC_EXTRACT=1
 
+# [SOURCE_COVERAGE]: if set, instrument the target for the source-based code
+# coverage and obtain the coverage by replaying the corpus (default: unset)
+# SOURCE_COVERAGE=1
+
 # [MAGMA_DEBUG]: if set, container entrypoint is switched to a shell. The fuzzer, 
 # target and magma folders are mounted as volumes in a separate workdir. Useful 
 # for investigating build issues.

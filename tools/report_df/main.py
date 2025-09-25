@@ -6,6 +6,7 @@ import MatplotlibPlotter
 from BenchmarkData import BenchmarkData
 import DataProcessing
 from ReportGeneration import generate_report
+from gen_cov_html import cov_main
 import argparse
 import logging
 
@@ -23,6 +24,10 @@ def parse_args():
         help=("Controls the verbosity of messages. "
             "-v prints info. -vv prints debug. Default: warnings and higher.")
         )
+    parser.add_argument('-t', '--trials', type=int, default=10,
+        help="Number of trials to consider in the analysis. Default: 10")
+    parser.add_argument('-d', '--duration', type=int, default=7,
+        help="Duration in days for the benchmark analysis. Default: 7")
     return parser.parse_args()
 
 def configure_verbosity(level):
@@ -38,7 +43,13 @@ def configure_verbosity(level):
 def main():
     args = parse_args()
     configure_verbosity(args.verbose)
-    bd = BenchmarkData(args.json, config={'duration': 7 * 24 * 60 * 60, 'trials': 10})
+    # Convert duration from days to seconds
+    duration_seconds = args.duration * 24 * 60 * 60
+    bd = BenchmarkData(args.json, config={'duration': duration_seconds, 'trials': args.trials})
+    
+    # Generate coverage reports
+    cov_main()
+    # Generate main reports
     generate_report(bd, args.outdir)
 
 if __name__ == '__main__':

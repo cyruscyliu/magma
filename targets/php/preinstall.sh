@@ -7,3 +7,5 @@ apt-get update && \
 # Dependency for PHP: oniguruma
 git clone https://github.com/kkos/oniguruma.git \
     "$TARGET/oniguruma"
+
+cp -r $TARGET/oniguruma $COV/

@@ -40,6 +40,9 @@ fi
 if [ ! -z $HARDEN ]; then
     harden_flag="--build-arg harden=1"
 fi
+if [ ! -z $SOURCE_COVERAGE ]; then
+    coverage_flag="--build-arg source_coverage=1"
+fi
 
 set -x
 docker build -t "$IMG_NAME" \
@@ -47,7 +50,7 @@ docker build -t "$IMG_NAME" \
     --build-arg fuzzer_name="$FUZZER" \
     --build-arg target_name="$TARGET" \
     --build-arg target_version="$TARGET_VERSION" \
-    $mode_flag $isan_flag $harden_flag \
+    $mode_flag $isan_flag $harden_flag $coverage_flag \
     -f "$MAGMA/docker/Dockerfile" "$MAGMA"
 set +x
 

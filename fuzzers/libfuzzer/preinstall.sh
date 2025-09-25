@@ -17,6 +17,7 @@ update-alternatives \
     --slave   /usr/bin/llvm-bcanalyzer   llvm-bcanalyzer  /usr/bin/llvm-bcanalyzer-$LLVM_VERSION \
     --slave   /usr/bin/llvm-c-test       llvm-c-test      /usr/bin/llvm-c-test-$LLVM_VERSION \
     --slave   /usr/bin/llvm-cov          llvm-cov         /usr/bin/llvm-cov-$LLVM_VERSION \
+    --slave   /usr/bin/llvm-profdata     llvm-profdata    /usr/bin/llvm-profdata-$LLVM_VERSION \
     --slave   /usr/bin/llvm-diff         llvm-diff        /usr/bin/llvm-diff-$LLVM_VERSION \
     --slave   /usr/bin/llvm-dis          llvm-dis         /usr/bin/llvm-dis-$LLVM_VERSION \
     --slave   /usr/bin/llvm-dwarfdump    llvm-dwarfdump   /usr/bin/llvm-dwarfdump-$LLVM_VERSION \

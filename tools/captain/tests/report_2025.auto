@@ -8,6 +8,7 @@ WORKDIR=workdir_report_2025
 REPEAT=10
 TIMEOUT=24h
 ISAN=1
+SOURCE_COVERAGE=1
 
 
 ###
