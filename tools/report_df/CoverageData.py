@@ -18,7 +18,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-ROOT_DIR = "../captain/workdir_report_2025/ar"
+ROOT_DIR = "../captain/workdir/ar"
 OUT_DIR = "out/cov"
 OUT_FILE = f"{OUT_DIR}/coverage.html"
 USE_CACHE = False
