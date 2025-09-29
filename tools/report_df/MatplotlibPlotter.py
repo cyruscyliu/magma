@@ -109,7 +109,7 @@ def unique_bugs_per_target(bd, outdir, metric, libraries=None, symmetric=False, 
 
     for ax in axs.flat[len(libraries):]:
         fig.delaxes(ax)
-    fig.tight_layout(pad=2.0)
+    fig.set_constrained_layout(True)
 
     sigmatrix, path = output(outdir, 'plot', 'summary_signplot.svg')
     fig.savefig(path, bbox_inches='tight')
@@ -266,26 +266,25 @@ def bug_survival_plots(bd, outdir):
             mask = mask.unstack().apply(lambda x: x == x.name)
             return mask.reindex_like(df)
 
-        uniq_min = df.stack(level=0).groupby(level=0) \
-                        .apply(lambda x: x[x == x.min()].count() == 1).stack()
-        uniq_max = df.stack(level=0).groupby(level=0) \
-                        .apply(lambda x: x[x == x.max()].count() == 1).stack()
+        uniq_min = df.stack(level=0, future_stack=True).groupby(level=0) \
+                        .apply(lambda x: x[x == x.min()].count() == 1).stack(future_stack=True)
+        uniq_max = df.stack(level=0, future_stack=True).groupby(level=0) \
+                        .apply(lambda x: x[x == x.max()].count() == 1).stack(future_stack=True)
 
         # filter out entries which do not need to be highlighted
-        mins = df.stack().groupby(level=0, as_index=False) \
-                            .idxmin(axis=1).droplevel(0)
-        mins = mins[uniq_min == True]
-        maxs = df.stack().groupby(level=0, as_index=False) \
-                            .idxmax(axis=1).droplevel(0)
-        maxs = maxs[uniq_max == True]
+        mins = df.stack(level=1, future_stack=True).idxmin(axis=1)
+        mins = mins[uniq_min]
+
+        maxs = df.stack(level=1, future_stack=True).idxmax(axis=1)
+        maxs = maxs[uniq_max]
         survivals = df == bd.duration
 
-        color_df = series_to_mask(mins, df.stack()).unstack() \
-                    .applymap(lambda x: 'background-color: #bfe8c2' if x else None)
-        color_df.update(series_to_mask(maxs, df.stack()).unstack() \
-                    .applymap(lambda x: 'background-color: #e2ea67' if x else None))
+        color_df = series_to_mask(mins, df.stack(future_stack=True)).unstack() \
+                    .map(lambda x: 'background-color: #bfe8c2' if x else None)
+        color_df.update(series_to_mask(maxs, df.stack(future_stack=True)).unstack() \
+                    .map(lambda x: 'background-color: #e2ea67' if x else None))
         color_df.update(survivals \
-                    .applymap(lambda x: 'background-color: #efa2a2' if x else None))
+                    .map(lambda x: 'background-color: #efa2a2' if x else None))
         color_df.fillna('', inplace=True)
         color_df = color_df.reindex_like(df)
         return color_df
@@ -293,7 +292,7 @@ def bug_survival_plots(bd, outdir):
     # adjust dataframe for better presentation
     means = means.droplevel('Target')
 
-    agg = means.stack(0).groupby('BugID') \
+    agg = means.stack(0, future_stack=True).groupby('BugID') \
                         .apply(lambda x: pd.Series(
                             {
                                 Metric.REACHED.value:   x[Metric.REACHED.value].mean(),
@@ -303,7 +302,7 @@ def bug_survival_plots(bd, outdir):
     agg.columns = pd.MultiIndex.from_product([['Aggregate'], [Metric.REACHED.value, Metric.TRIGGERED.value]])
     means = means.join(agg)
 
-    stacked = means.stack()
+    stacked = means.stack(future_stack=True)
 
     def _sort_key(cols):
         out = []
