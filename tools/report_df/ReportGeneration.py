@@ -1,6 +1,7 @@
 import jinja2
 import MatplotlibPlotter
 from Metric import Metric
+from gen_cov_html import get_md_report_data
 import os
 import errno
 
@@ -40,6 +41,11 @@ def generate_target_page(bd, base, env, target, **kwargs):
 def generate_fuzzer_page(bd, base, env, fuzzer, **kwargs):
     template = env.get_template('fuzzer_template.md')
     html = template.render(base_template=base, fuzzer=fuzzer, **kwargs)
+    return html
+
+def generate_coverage_page(base, env, **kwargs):
+    template = env.get_template('coverage_template.md')
+    html = template.render(base_template=base, **kwargs)
     return html
 
 def generate_report(bd, outdir, report_title="Report", **kwargs):
@@ -100,3 +106,7 @@ def generate_report(bd, outdir, report_title="Report", **kwargs):
     for target, html in targets.items():
         with open(os.path.join(outdir, 'targets', f'{target}.md'), 'w') as f:
             f.write(html)
+
+    with open(os.path.join(outdir, 'cov', 'coverage.md'), 'w') as f:
+        cov_data = get_md_report_data()
+        f.write(generate_coverage_page(base_template, env, cov_data=cov_data))
