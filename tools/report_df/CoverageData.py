@@ -1,3 +1,12 @@
+"""
+This script can be used standalone to generate an HTML coverage report from
+workdir/ar directory:
+    python CoverageData.py --root_dir ../captain/<workdir>/ar --cache
+
+It can alsoe be imported to get coverage data for markdown report:
+    from CoverageData import get_md_report_data
+    cov_data = get_md_report_data()
+"""
 import os
 import json
 import tarfile
@@ -9,7 +18,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-ROOT_DIR = "../captain/workdir/ar"
+ROOT_DIR = "../captain/workdir_report_2025/ar"
 OUT_DIR = "out/cov"
 OUT_FILE = f"{OUT_DIR}/coverage.html"
 USE_CACHE = False

@@ -1,7 +1,7 @@
 import jinja2
 import MatplotlibPlotter
 from Metric import Metric
-from gen_cov_html import get_md_report_data
+from CoverageData import get_md_report_data
 import os
 import errno
 
