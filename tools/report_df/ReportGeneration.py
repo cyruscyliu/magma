@@ -64,9 +64,11 @@ def generate_report(bd, outdir, report_title="Report", **kwargs):
     ensure_dir(os.path.join(outdir, 'cov'))
 
     boxplots = MatplotlibPlotter.bug_metric_boxplot(bd, outdir)
+    print("Generated boxplots.")
     uniq_bugs, sigmatrix = MatplotlibPlotter.unique_bugs_per_target(bd, outdir, Metric.TRIGGERED.value)
     ett = MatplotlibPlotter.expected_time_to_trigger(bd, outdir)
     survplots, survlegend, survtable, hiliter_css, heatmap_css = MatplotlibPlotter.bug_survival_plots(bd, outdir)
+    print("Generated survival plots.")
     ppool = locals()
 
     env = jinja2.Environment(loader=jinja2.ChoiceLoader(
@@ -106,6 +108,8 @@ def generate_report(bd, outdir, report_title="Report", **kwargs):
     for target, html in targets.items():
         with open(os.path.join(outdir, 'targets', f'{target}.md'), 'w') as f:
             f.write(html)
+
+    print(f"Generated markdown pages at path '{outdir}'.\n\n")
 
     with open(os.path.join(outdir, 'cov', 'coverage.md'), 'w') as f:
         cov_data = get_md_report_data()
