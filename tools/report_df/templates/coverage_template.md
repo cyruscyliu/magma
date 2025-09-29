@@ -17,7 +17,7 @@ Coverage summary
         </ol>
         is plotted to compare the fuzzers. This data is combined across all trials in a 
         campaign. In addition to the plots, the source code coverage reports for each fuzzing 
-        trial are listed.
+        trial can be found here: <a href="#">Source code coverage reports</a>.
     </p>
 {% for target in cov_data%}
     <h2>{{ target }}</h2>
@@ -32,11 +32,6 @@ Coverage summary
              <div class="col s6">{{ program_data['fig_percent_overtime'] }}</div>
             <div class="col s6">{{ program_data['fig_covered_overtime'] }}</div>
         </div>
-        <ul class="browser-default">
-            {% for cov_link in program_data['links'] %}
-                <li>{{cov_link}}</li>
-            {% endfor %}
-        </ul>
     {% endfor %}
 {% endfor%}
 </div>
