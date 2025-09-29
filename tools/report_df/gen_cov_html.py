@@ -25,7 +25,7 @@ records_overtime = []
 figures = []
 
 
-def load_cov_data(target_dirs: list):
+def _load_cov_data(target_dirs: list):
     # Step 1: Load data into DataFrame
     for root, _, files in os.walk(ROOT_DIR):
         if "coverage-reports.json" not in files and "ball.tar" in files:
@@ -319,7 +319,7 @@ def get_args():
     return parser.parse_args()
 
 
-def cov_main():
+def load_data():
     init_dirs()
 
     if USE_CACHE and os.path.exists(CACHE_PATH):
@@ -328,13 +328,27 @@ def cov_main():
         df_overtime = pd.read_pickle(COVERAGE_OVERTIME_CACHE_PATH)
     else:
         print(f"Scanning {ROOT_DIR} for coverage-reports.json ...")
-        df, df_overtime = load_cov_data(TARGETS)
+        df, df_overtime = _load_cov_data(TARGETS)
         df.to_pickle(CACHE_PATH)
         df_overtime.to_pickle(COVERAGE_OVERTIME_CACHE_PATH)
         print("Saved DataFrame to cache.")
 
-    gen_cov_report(df, df_overtime)
+    return df, df_overtime
 
+def get_md_report_data():
+    df, df_overtime = load_data()
+    gen_figures(df, df_overtime)
+    print("Generated figures for markdown report.")
+    
+    cov_data = {}
+
+    for figure in figures:
+        parent, child = figure["key"].split('/')
+        if parent not in cov_data:
+            cov_data[parent] = {}
+        cov_data[parent][child] = figure
+
+    return cov_data
 
 if __name__ == "__main__":
     args = get_args()
@@ -344,4 +358,5 @@ if __name__ == "__main__":
     USE_CACHE = args.cache
     TARGETS = args.target
 
-    cov_main()
+    df, df_overtime = load_data()
+    gen_cov_report(df, df_overtime)
