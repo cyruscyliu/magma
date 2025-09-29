@@ -129,7 +129,7 @@ def unique_bugs_per_target_data(bd, metric):
         index = pd.MultiIndex.from_product([fuzzer_label,fuzzer_label],names=['Outer','Inner'])
         #Creation of the p_value Dataframe with the previously computed index.
         #Index has to been reset such that the multi index values can be passed as argument to the lambda function
-        p_values = pd.DataFrame(index=index,columns=['p_value']).fillna(np.nan)
+        p_values = pd.DataFrame(index=index,columns=['p_value'], dtype=float).fillna(np.nan)
         p_values = p_values.apply(lambda f: two_sided_test(*f.name,fuzzer_data), axis=1)
         #Unstacking the Dataframe gives it the expected 2 dimensional shape for a p_value array
         return p_values.unstack()
@@ -153,7 +153,7 @@ def unique_bugs_per_target_data(bd, metric):
     #This is needed because the Mann-Whitney U-test requires the same number of
     #samples for both sample sets.
     unique_bugs = unique_bugs.unstack('Campaign', fill_value=0) \
-                             .stack(level=0)
+                             .stack(level=0, future_stack=True)
 
     agg = unique_bugs.groupby(['Fuzzer', 'Target']) \
                      .apply(lambda d: pd.DataFrame([d.mean(), d.std()],
@@ -334,25 +334,30 @@ def bug_survival_data(bd):
                 }),
             ]
             group = pd.concat([group, pd.DataFrame(new_rows)], ignore_index=True)
-
-        group = group.groupby('Fuzzer').apply(fillmissing, name).reset_index(drop=True)
-
-        subgroups = group.groupby(['Fuzzer','Metric']).apply(fit_kmf_one, name, N)
+     
+        group = group.groupby('Fuzzer')[
+            ['Fuzzer', 'Target', 'Program', 'Campaign', 'Metric', 'BugID', 'Time']
+        ].apply(fillmissing, name, include_groups=False).reset_index(drop=True)
+        
+        subgroups = group.groupby(['Fuzzer','Metric'])[
+            ['Fuzzer', 'Target', 'Program', 'Campaign', 'Metric', 'BugID', 'Time']
+        ].apply(fit_kmf_one, name, N, include_groups=False)    
         return subgroups
 
     df = bd.frame
     N = df.reset_index().groupby(['Fuzzer', 'Target', 'Program'])['Campaign'].nunique()
     kmf = df.reset_index() \
-            .groupby(['Target', 'Program', 'BugID']) \
-            .apply(fit_kmf_all, N)
+            .groupby(['Target', 'Program', 'BugID'])[
+                ['Fuzzer', 'Target', 'Program', 'Campaign', 'Metric', 'BugID', 'Time']
+            ].apply(fit_kmf_all, N, include_groups=False)
 
     # get the mean survival time for every (target, program, bug, fuzzer, metric) tuple
-    means = kmf.applymap(lambda k: restricted_mean_survival_time(k, bd.duration))
+    means = kmf.map(lambda k: restricted_mean_survival_time(k, bd.duration))
     # re-arrange the dataframe such that the columns are the metrics
-    means = means.stack(level=0)
+    means = means.stack(level=0, future_stack=True)
     # for every (target, bug, fuzzer) tuple, select the row corresponding to the program where the bug was triggered earliest
     means = means.loc[means.groupby(['Target', 'BugID', 'Fuzzer'])[Metric.TRIGGERED.value].idxmin()]
     # re-arrange dataframe so that index is (target, bug) and columns are (fuzzer, metric)
-    means = means.droplevel('Program').stack().unstack(-2).unstack()
+    means = means.droplevel('Program').stack(future_stack=True).unstack(-2).unstack()
 
     return kmf, means
