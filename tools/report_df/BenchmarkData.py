@@ -48,7 +48,7 @@ class BenchmarkData:
                     d[k] = v
             return d
 
-        print("Load json")
+        print(f"Loading benchmark data from '{filename}'...")
         with open(filename) as f:
             json_data = json.load(f)
 

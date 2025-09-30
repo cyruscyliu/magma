@@ -6,7 +6,6 @@ import MatplotlibPlotter
 from BenchmarkData import BenchmarkData
 import DataProcessing
 from ReportGeneration import generate_report
-from gen_cov_html import cov_main
 import argparse
 import logging
 
@@ -47,8 +46,6 @@ def main():
     duration_seconds = args.duration * 24 * 60 * 60
     bd = BenchmarkData(args.json, config={'duration': duration_seconds, 'trials': args.trials})
     
-    # Generate coverage reports
-    cov_main()
     # Generate main reports
     generate_report(bd, args.outdir)
 
