@@ -89,7 +89,7 @@ for target, link in links.items():
         year_to_tag = get_tags(repo)
 
         latest_year = max(year_to_tag.keys())
-        stable_hash = get_first_commit_of_year(repo, latest_year)
+        stable_hash = get_first_commit_of_year(repo, END_YEAR)
 
         print(f"Got tags and latest commit of {target}")
         releases = [
