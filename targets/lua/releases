@@ -1,5 +1,5 @@
 lua_PIONEER="https://github.com/lua/lua.git"
-lua_PIONEER_STABLE_COMMIT="7827c40c49d841daca2a40463b8a60f9a113f77e"
+lua_PIONEER_STABLE_COMMIT="1ec251e091302515e54aa81d965840a5de4be0a1"
 lua_LEGACY_2022="https://github.com/lua/lua.git"
 lua_LEGACY_2022_TAG="v5.4.4"
 lua_LEGACY_2023="https://github.com/lua/lua.git"
