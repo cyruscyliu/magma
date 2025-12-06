@@ -1,16 +1,17 @@
 diff --git a/libtiff/tif_pixarlog.c b/libtiff/tif_pixarlog.c
-index 5ed921eb..06c38499 100644
+index 56cf416a..e65291b7 100644
 --- a/libtiff/tif_pixarlog.c
 +++ b/libtiff/tif_pixarlog.c
-@@ -881,12 +881,17 @@ static int PixarLogDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
-         TIFFErrorExtR(tif, module, "ZLib cannot deal with buffers this size");
+@@ -883,6 +883,7 @@ static int PixarLogDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
+         memset(op, 0, (size_t)occ);
          return (0);
      }
 +#ifdef MAGMA_ENABLE_FIXES
      /* Check that we will not fill more than what was allocated */
      if ((tmsize_t)sp->stream.avail_out > sp->tbuf_size)
      {
-         TIFFErrorExtR(tif, module, "sp->stream.avail_out > sp->tbuf_size");
+@@ -890,6 +891,10 @@ static int PixarLogDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
+         memset(op, 0, (size_t)occ);
          return (0);
      }
 +#endif
