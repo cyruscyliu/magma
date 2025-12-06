@@ -1,5 +1,5 @@
 diff --git a/liolib.c b/liolib.c
-index b08397da..49d72eeb 100644
+index 98ff3d0d..e082349a 100644
 --- a/liolib.c
 +++ b/liolib.c
 @@ -291,7 +291,13 @@ static int io_popen (lua_State *L) {
@@ -13,6 +13,6 @@ index b08397da..49d72eeb 100644
 +  MAGMA_LOG("%MAGMA_BUG%", !l_checkmodep(mode));
 +#endif
 +#endif
+   errno = 0;
    p->f = l_popen(L, filename, mode);
    p->closef = &io_pclose;
-   return (p->f == NULL) ? luaL_fileresult(L, 0, filename) : 1;
