@@ -34,6 +34,36 @@ Build a Docker image for a fuzzer/target combination. Returns a task_id for trac
 
 ---
 
+### `magma_build_images`
+
+Build Docker images for multiple fuzzer/target combinations with concurrency control.
+
+**Parameters:**
+
+- `fuzzers`: List of fuzzer names. Empty or null for all fuzzers.
+- `targets`: List of target names. Empty or null for all targets.
+- `max_parallel`: Maximum concurrent builds (default 2)
+- `target_version`: Version from releases file (default 'PIONEER')
+- `canary_mode`: 1=with canaries, 2=no canaries, 3=with fixes (default 1)
+- `isan`: Enable fatal canaries (default false)
+- `harden`: Enable hardened canaries (default false)
+- `source_coverage`: Enable source coverage instrumentation (default false)
+
+**Schema:**
+
+| Parameter | Type | Required | Default |
+|-----------|------|----------|---------|
+| `fuzzers` | `any` | no | None |
+| `targets` | `any` | no | None |
+| `max_parallel` | `integer` | no | 2 |
+| `target_version` | `string` | no | PIONEER |
+| `canary_mode` | `integer` | no | 1 |
+| `isan` | `boolean` | no | False |
+| `harden` | `boolean` | no | False |
+| `source_coverage` | `boolean` | no | False |
+
+---
+
 ### `magma_extract_pocs`
 
 Extract proof-of-concept crash inputs from campaign findings. Async operation.
@@ -112,6 +142,12 @@ Read the full patch content for a specific bug.
 
 ---
 
+### `magma_get_build_matrix`
+
+Get a summary matrix of all build tasks showing pass/fail status per fuzzer×target.
+
+---
+
 ### `magma_get_campaign_results`
 
 Get per-bug reach/trigger timing data for a specific campaign run.
@@ -183,6 +219,26 @@ Get detailed information about a specific target including programs, args, versi
 | Parameter | Type | Required | Default |
 |-----------|------|----------|---------|
 | `target` | `string` | yes | — |
+
+---
+
+### `magma_get_task_log`
+
+Retrieve the full log for a task from disk.
+
+**Parameters:**
+
+- `task_id`: The task_id returned by an async tool
+- `tail`: Only return the last N lines (0 = all)
+- `search`: Filter to lines containing this string (e.g. 'error', 'FAILED')
+
+**Schema:**
+
+| Parameter | Type | Required | Default |
+|-----------|------|----------|---------|
+| `task_id` | `string` | yes | — |
+| `tail` | `integer` | no | 0 |
+| `search` | `string` | no |  |
 
 ---
 
