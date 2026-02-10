@@ -64,6 +64,30 @@ Build Docker images for multiple fuzzer/target combinations with concurrency con
 
 ---
 
+### `magma_configure_cpus`
+
+Reconfigure the CPU pool for campaign affinity. Fails if any CPUs are allocated.
+
+**Parameters:**
+
+- `worker_mode`: CPU dedup mode: 1=all logical CPUs, 2=one per physical core, 3=one per socket. 0 keeps current.
+- `max_cpus`: Cap the pool to this many CPUs. 0 for no cap.
+
+**Schema:**
+
+| Parameter | Type | Required | Default |
+|-----------|------|----------|---------|
+| `worker_mode` | `integer` | no | 0 |
+| `max_cpus` | `integer` | no | 0 |
+
+---
+
+### `magma_cpu_status`
+
+Show CPU pool status: total, free, allocated per-task, and queued count.
+
+---
+
 ### `magma_extract_pocs`
 
 Extract proof-of-concept crash inputs from campaign findings. Async operation.
@@ -244,23 +268,25 @@ Retrieve the full log for a task from disk.
 
 ### `magma_get_task_status`
 
-Check the status of a long-running operation (build, campaign, extract, etc.).
+Check the status of campaign tasks by batch ID.
 
 **Parameters:**
 
-- `task_id`: The task_id returned by an async tool
+- `batch_id`: The batch_id returned by magma_start_campaign.
+- `task_ids`: Optional list of specific task IDs to check. If empty/null, returns all tasks in the batch.
 
 **Schema:**
 
 | Parameter | Type | Required | Default |
 |-----------|------|----------|---------|
-| `task_id` | `string` | yes | — |
+| `batch_id` | `integer` | yes | — |
+| `task_ids` | `any` | no | None |
 
 ---
 
 ### `magma_list_active_tasks`
 
-List all currently running long-running operations.
+List all active batches with their running/queued tasks.
 
 ---
 
@@ -320,18 +346,20 @@ List all available fuzzing targets with their programs, bug IDs, and versions.
 
 ### `magma_start_campaign`
 
-Start a single fuzzing campaign in a Docker container. Returns a task_id for tracking (async).
+Start fuzzing campaign(s) in Docker containers. Returns task_id(s) for tracking.
 
 **Parameters:**
 
 - `fuzzer`: Fuzzer name (e.g. 'aflplusplus')
 - `target`: Target name (e.g. 'libpng')
 - `program`: Program name from the target's configrc (e.g. 'libpng_read_fuzzer')
-- `timeout`: Campaign duration with suffix: s/m/h/d (default '1m')
-- `poll`: Seconds between monitor polls (default 5)
-- `affinity`: CPU affinity, comma-separated core IDs (e.g. '0,1'). Empty for no affinity.
+- `args`: Program launch arguments (e.g. '@@')
 - `fuzz_args`: Extra arguments to pass to the fuzzer
-- `workdir`: Where to store shared results. Auto-created if empty.
+- `timeout`: Campaign duration with suffix: s/m/h/d (default '1m')
+- `repeat`: Number of independent campaign trials to run (default 1)
+- `num_cpus`: CPUs to auto-allocate per campaign (0 = no affinity)
+- `poll`: Seconds between monitor polls (default 5)
+- `no_archive`: If true, move findings directly to ar/ instead of tarring (default false)
 
 **Schema:**
 
@@ -340,27 +368,31 @@ Start a single fuzzing campaign in a Docker container. Returns a task_id for tra
 | `fuzzer` | `string` | yes | — |
 | `target` | `string` | yes | — |
 | `program` | `string` | yes | — |
-| `timeout` | `string` | no | 1m |
-| `poll` | `integer` | no | 5 |
-| `affinity` | `string` | no |  |
+| `args` | `string` | no |  |
 | `fuzz_args` | `string` | no |  |
-| `workdir` | `string` | no |  |
+| `timeout` | `string` | no | 1m |
+| `repeat` | `integer` | no | 1 |
+| `num_cpus` | `integer` | no | 0 |
+| `poll` | `integer` | no | 5 |
+| `no_archive` | `boolean` | no | False |
 
 ---
 
 ### `magma_stop_campaign`
 
-Stop a running campaign or any long-running task.
+Stop running campaigns by batch ID, optionally filtering by task IDs.
 
 **Parameters:**
 
-- `task_id`: The task_id returned by magma_start_campaign, magma_build_image, etc.
+- `batch_id`: The batch_id returned by magma_start_campaign.
+- `task_ids`: Optional list of specific task IDs to stop. If empty/null, stops all tasks in the batch.
 
 **Schema:**
 
 | Parameter | Type | Required | Default |
 |-----------|------|----------|---------|
-| `task_id` | `string` | yes | — |
+| `batch_id` | `integer` | yes | — |
+| `task_ids` | `any` | no | None |
 
 ---
 
