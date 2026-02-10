@@ -10,6 +10,7 @@ import os
 import signal
 import uuid
 from collections import deque
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -19,6 +20,7 @@ from . import paths
 
 
 class TaskStatus(str, Enum):
+    QUEUED = "queued"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
@@ -45,6 +47,9 @@ class TaskRecord:
     output_buffer: deque = field(default_factory=lambda: deque(maxlen=200))
     log_file: Path | None = None
     _process: asyncio.subprocess.Process | None = field(default=None, repr=False)
+    _on_finish: Callable[["TaskRecord"], Awaitable[None]] | None = field(
+        default=None, repr=False
+    )
 
     @property
     def elapsed_seconds(self) -> float:
@@ -84,6 +89,7 @@ class TaskManager:
         cmd: list[str],
         env: dict[str, str] | None = None,
         cwd: str | None = None,
+        on_finish: Callable[[TaskRecord], Awaitable[None]] | None = None,
     ) -> TaskRecord:
         """Spawn a subprocess and track it as a task.
 
@@ -111,6 +117,7 @@ class TaskManager:
             description=description,
             log_file=log_file,
             _process=process,
+            _on_finish=on_finish,
         )
         self._tasks[task_id] = record
 
@@ -151,6 +158,53 @@ class TaskManager:
         record.status = TaskStatus.COMPLETED if exit_code == 0 else TaskStatus.FAILED
         record.finished_at = datetime.now(timezone.utc)
 
+        if record._on_finish:
+            try:
+                await record._on_finish(record)
+            except Exception:
+                pass
+
+    def register_queued(
+        self,
+        task_type: TaskType,
+        description: str,
+        on_finish: Callable[[TaskRecord], Awaitable[None]] | None = None,
+    ) -> TaskRecord:
+        """Create a task record in QUEUED state (no subprocess yet)."""
+        task_id = str(uuid.uuid4())
+        paths.LOG_DIR.mkdir(parents=True, exist_ok=True)
+        record = TaskRecord(
+            task_id=task_id,
+            task_type=task_type,
+            description=description,
+            status=TaskStatus.QUEUED,
+            log_file=paths.LOG_DIR / f"{task_id}.log",
+            _on_finish=on_finish,
+        )
+        self._tasks[task_id] = record
+        return record
+
+    async def start_queued(
+        self,
+        record: TaskRecord,
+        cmd: list[str],
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+    ) -> None:
+        """Start the subprocess for a previously queued task."""
+        merged_env = {**os.environ, **(env or {})}
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+            env=merged_env,
+            cwd=cwd,
+        )
+        record._process = process
+        record.status = TaskStatus.RUNNING
+        record.started_at = datetime.now(timezone.utc)
+        asyncio.create_task(self._read_output(record))
+
     def get(self, task_id: str) -> TaskRecord | None:
         return self._tasks.get(task_id)
 
@@ -187,6 +241,13 @@ class TaskManager:
         record.status = TaskStatus.CANCELLED
         record.finished_at = datetime.now(timezone.utc)
         record.exit_code = -1
+
+        if record._on_finish:
+            try:
+                await record._on_finish(record)
+            except Exception:
+                pass
+
         return True
 
 
