@@ -35,6 +35,8 @@ START_SH = CAPTAIN_DIR / "start.sh"
 EXTRACT_SH = CAPTAIN_DIR / "extract.sh"
 RUNONCE_SH = MAGMA_LIB_DIR / "runonce.sh"
 
+LOG_DIR = MAGMA_ROOT / "mmcp" / "logs"
+
 
 def target_dir(target: str) -> Path:
     return TARGETS_DIR / target
