@@ -2,6 +2,7 @@
 
 Each task wraps an asyncio subprocess, tracks its status, and buffers
 the last N lines of combined stdout/stderr for progress reporting.
+Full logs are persisted to disk under mmcp/logs/.
 """
 
 import asyncio
@@ -12,6 +13,9 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
+
+from . import paths
 
 
 class TaskStatus(str, Enum):
@@ -39,6 +43,7 @@ class TaskRecord:
     finished_at: datetime | None = None
     exit_code: int | None = None
     output_buffer: deque = field(default_factory=lambda: deque(maxlen=200))
+    log_file: Path | None = None
     _process: asyncio.subprocess.Process | None = field(default=None, repr=False)
 
     @property
@@ -51,7 +56,7 @@ class TaskRecord:
         return "\n".join(self.output_buffer)
 
     def to_dict(self) -> dict:
-        return {
+        d = {
             "task_id": self.task_id,
             "type": self.task_type.value,
             "description": self.description,
@@ -61,6 +66,9 @@ class TaskRecord:
             "exit_code": self.exit_code,
             "output_tail": self.output_tail,
         }
+        if self.log_file:
+            d["log_file"] = str(self.log_file)
+        return d
 
 
 class TaskManager:
@@ -83,6 +91,10 @@ class TaskManager:
         """
         task_id = str(uuid.uuid4())
 
+        # Create log directory and file
+        paths.LOG_DIR.mkdir(parents=True, exist_ok=True)
+        log_file = paths.LOG_DIR / f"{task_id}.log"
+
         merged_env = {**os.environ, **(env or {})}
 
         process = await asyncio.create_subprocess_exec(
@@ -97,6 +109,7 @@ class TaskManager:
             task_id=task_id,
             task_type=task_type,
             description=description,
+            log_file=log_file,
             _process=process,
         )
         self._tasks[task_id] = record
@@ -107,20 +120,30 @@ class TaskManager:
         return record
 
     async def _read_output(self, record: TaskRecord):
-        """Read process output line by line into the circular buffer."""
+        """Read process output line by line into the circular buffer and log file."""
         process = record._process
         if process is None or process.stdout is None:
             return
 
+        log_fh = None
         try:
+            if record.log_file:
+                log_fh = open(record.log_file, "w")
+
             while True:
                 line = await process.stdout.readline()
                 if not line:
                     break
                 decoded = line.decode("utf-8", errors="replace").rstrip("\n")
                 record.output_buffer.append(decoded)
+                if log_fh:
+                    log_fh.write(decoded + "\n")
+                    log_fh.flush()
         except Exception:
             pass
+        finally:
+            if log_fh:
+                log_fh.close()
 
         # Wait for process to finish
         exit_code = await process.wait()
@@ -136,6 +159,9 @@ class TaskManager:
 
     def list_all(self) -> list[TaskRecord]:
         return list(self._tasks.values())
+
+    def list_by_type(self, task_type: TaskType) -> list[TaskRecord]:
+        return [t for t in self._tasks.values() if t.task_type == task_type]
 
     async def cancel(self, task_id: str) -> bool:
         """Cancel a running task by sending SIGTERM to its process."""
