@@ -27,12 +27,13 @@ mcp = FastMCP(
 )
 
 # Register all tool modules
-from mmcp.tools import build, campaign, results, releasegen
+from mmcp.tools import build, campaign, results, releasegen, entity_files
 
 build.register(mcp)
 campaign.register(mcp)
 results.register(mcp)
 releasegen.register(mcp)
+entity_files.register(mcp)
 
 # Register all resource modules
 from mmcp.resources import targets, fuzzers, config

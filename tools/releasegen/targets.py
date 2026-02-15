@@ -101,6 +101,7 @@ def generate_target_release(
     magma_root: Path,
     target: str,
     start_year: int,
+    dry_run: bool = False,
 ) -> dict:
     """Generate releases for one target and return MCP-friendly metadata."""
     targets_dir = magma_root / "targets"
@@ -120,7 +121,11 @@ def generate_target_release(
             stable_commit=stable,
             year_to_tag=tags,
         )
-        releases_path = write_target_releases(targets_dir / spec.name, spec.name, lines)
+        releases_path = targets_dir / spec.name / "releases"
+        if not dry_run:
+            releases_path = write_target_releases(
+                targets_dir / spec.name, spec.name, lines
+            )
     finally:
         shutil.rmtree(cache_root, ignore_errors=True)
 
@@ -131,6 +136,8 @@ def generate_target_release(
         "end_year": end_year,
         "stable_commit": stable,
         "releases_path": str(releases_path),
+        "dry_run": dry_run,
+        "releases_preview": "".join(lines),
     }
 
 
