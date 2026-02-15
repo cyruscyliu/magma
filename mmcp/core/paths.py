@@ -29,10 +29,10 @@ MAGMA_LIB_DIR = MAGMA_ROOT / "magma"
 
 CAPTAINRC = CAPTAIN_DIR / "captainrc"
 DOCKERFILE = DOCKER_DIR / "Dockerfile"
-TARGET_BUILD_DOCKERFILE = DOCKER_DIR / "Dockerfile.target.build"
+TARGET_BUILD_DOCKERFILE = DOCKER_DIR / "Dockerfile.build"
 
 BUILD_SH = CAPTAIN_DIR / "build.sh"
-BUILD_TARGET_CHECK_SH = CAPTAIN_DIR / "build_target_check.sh"
+BUILD_TARGET_CHECK_SH = CAPTAIN_DIR / "build_check.py"
 START_SH = CAPTAIN_DIR / "start.sh"
 EXTRACT2_SH = CAPTAIN_DIR / "extract2.sh"
 CAPTAIN_RUNONCE_SH = CAPTAIN_DIR / "runonce.sh"

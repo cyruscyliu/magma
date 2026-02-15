@@ -1,0 +1,59 @@
+##
+# Fast target build-check runner image.
+#
+# This image is used with docker run and bind mounts:
+# - mounts host magma/magma and magma/targets into /magma
+# - runs fetch/patch/build against the mounted target directory so the checked
+#   out repo is available on the host (e.g. targets/<t>/repo).
+##
+
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get -y install \
+      sudo \
+      ca-certificates \
+      git \
+      wget \
+      clang \
+      llvm \
+      make \
+      build-essential \
+      patch \
+      autoconf \
+      automake \
+      libtool \
+      pkg-config
+
+ENV MAGMA_R=/magma
+ENV OUT=/magma_out
+ENV COV=/magma_cov
+ENV SHARED=/magma_shared
+
+ENV CC=/usr/bin/clang
+ENV CXX=/usr/bin/clang++
+ENV LD=/usr/bin/ld
+ENV AR=/usr/bin/ar
+ENV AS=/usr/bin/as
+ENV NM=/usr/bin/nm
+ENV RANLIB=/usr/bin/ranlib
+
+ARG USER_ID=1001
+ARG GROUP_ID=1001
+RUN mkdir -p /home && \
+	groupadd -g ${GROUP_ID} magma && \
+	useradd -l -u ${USER_ID} -K UMASK=0000 -d /home -g magma magma && \
+	chown magma:magma /home
+RUN	echo "magma:magma" | chpasswd && usermod -a -G sudo magma
+RUN echo "magma ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+RUN mkdir -p ${SHARED} ${OUT} ${COV} && \
+	chown magma:magma ${SHARED} ${OUT} ${COV} && \
+	chmod 744 ${SHARED} ${OUT} ${COV}
+
+COPY target_build_check_entrypoint.sh /usr/local/bin/magma_target_build_check
+RUN chmod +x /usr/local/bin/magma_target_build_check
+
+COPY fuzzer_build_check_entrypoint.sh /usr/local/bin/magma_fuzzer_build_check
+RUN chmod +x /usr/local/bin/magma_fuzzer_build_check
+
+# No default entrypoint; callers should pass `--entrypoint` explicitly.
