@@ -13,6 +13,7 @@ def register(mcp: FastMCP):
     async def magma_generate_target_release(
         target: str,
         start_year: int = 2022,
+        dry_run: bool = False,
     ) -> str:
         """Generate releases file for one target based on TARGET_REPO metadata.
 
@@ -22,6 +23,7 @@ def register(mcp: FastMCP):
         Args:
             target: Target name (e.g. 'libpng').
             start_year: Baseline year for LEGACY entries (default 2022).
+            dry_run: If true, only compute/preview content without writing.
         """
         if target not in paths.list_target_names():
             return json.dumps({"error": f"Unknown target: {target}"})
@@ -33,6 +35,7 @@ def register(mcp: FastMCP):
                 magma_root=paths.MAGMA_ROOT,
                 target=target,
                 start_year=start_year,
+                dry_run=dry_run,
             )
         except Exception as exc:
             return json.dumps({"error": str(exc)})
