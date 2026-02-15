@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import subprocess
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from ..core.task_manager import TaskStatus, TaskType, task_manager
 _BATCHES_DIR = paths.MAGMA_ROOT / "workdirs"
 
 # In-memory batch registry: batch_id -> {workdir, task_ids}
-_batches: dict[int, dict] = {}
+_batches: dict[str, dict] = {}
 
 
 def _rebuild_batches() -> None:
@@ -27,9 +28,9 @@ def _rebuild_batches() -> None:
         bid = record.metadata.get("batch_id")
         if bid is None:
             continue
-        bid = int(bid)
+        bid = str(bid)
         if bid not in _batches:
-            workdir = str(_BATCHES_DIR / str(bid))
+            workdir = str(_BATCHES_DIR / bid)
             _batches[bid] = {"workdir": workdir, "task_ids": []}
         if record.task_id not in _batches[bid]["task_ids"]:
             _batches[bid]["task_ids"].append(record.task_id)
@@ -39,22 +40,11 @@ def _rebuild_batches() -> None:
 _rebuild_batches()
 
 
-def _next_batch_id() -> int:
-    """Return the next available batch ID, considering both disk and memory."""
-    _BATCHES_DIR.mkdir(parents=True, exist_ok=True)
-    existing = set()
-    for d in os.listdir(_BATCHES_DIR):
-        if d.isdigit():
-            existing.add(int(d))
-    existing.update(_batches.keys())
-    return max(existing, default=-1) + 1
-
-
-def _get_workdir(batch_id: int) -> str:
+def _get_workdir(batch_id: str) -> str:
     """Get or create the workdir for a batch ID."""
     if batch_id in _batches:
         return _batches[batch_id]["workdir"]
-    workdir = str(_BATCHES_DIR / str(batch_id))
+    workdir = str(_BATCHES_DIR / batch_id)
     for sub in ("ar", "cache", "log", "poc"):
         os.makedirs(os.path.join(workdir, sub), exist_ok=True)
     _batches[batch_id] = {"workdir": workdir, "task_ids": []}
@@ -108,7 +98,7 @@ def register(mcp: FastMCP):
         fuzz_args: str,
         workdir: str,
         run_id: int,
-        batch_id: int,
+        batch_id: str,
         no_archive: bool = False,
     ) -> dict:
         """Launch a single campaign instance.
@@ -122,6 +112,8 @@ def register(mcp: FastMCP):
         ar_dir = os.path.join(workdir, "ar", fuzzer, target, program, str(run_id))
         log_dir = os.path.join(workdir, "log")
         os.makedirs(cache_dir, exist_ok=True)
+        # Container's magma user (uid 1001) needs write access to SHARED dir
+        os.chmod(cache_dir, 0o777)
         os.makedirs(log_dir, exist_ok=True)
 
         log_file = Path(log_dir) / f"{fuzzer}_{target}_{program}_{run_id}_container.log"
@@ -240,6 +232,7 @@ def register(mcp: FastMCP):
         num_cpus: int = 0,
         poll: int = 5,
         no_archive: bool = False,
+        batch_id: str = "",
     ) -> str:
         """Start fuzzing campaign(s) in Docker containers. Returns task_id(s) for tracking.
 
@@ -249,10 +242,9 @@ def register(mcp: FastMCP):
         finishes, results are archived into ar/ (tar by default, or moved
         directly if no_archive is set).
 
-        Each call auto-assigns a batch ID. All campaigns from the same call
-        share a batch. Use repeat > 1 to run multiple independent trials.
-        Each trial gets its own run_id and CPU allocation. Campaigns are
-        queued when CPUs are exhausted.
+        All campaigns from the same call share a batch. Use repeat > 1 to run
+        multiple independent trials. Each trial gets its own run_id and CPU
+        allocation. Campaigns are queued when CPUs are exhausted.
 
         Args:
             fuzzer: Fuzzer name (e.g. 'aflplusplus')
@@ -265,6 +257,7 @@ def register(mcp: FastMCP):
             num_cpus: CPUs to auto-allocate per campaign (0 = no affinity)
             poll: Seconds between monitor polls (default 5)
             no_archive: If true, move findings directly to ar/ instead of tarring (default false)
+            batch_id: Optional batch ID. If empty, a UUID is generated automatically.
         """
         if fuzzer not in paths.list_fuzzer_names():
             return json.dumps({"error": f"Unknown fuzzer: {fuzzer}"})
@@ -278,7 +271,8 @@ def register(mcp: FastMCP):
         if repeat < 1:
             return json.dumps({"error": "repeat must be >= 1"})
 
-        batch_id = _next_batch_id()
+        if not batch_id:
+            batch_id = str(uuid.uuid4())
         workdir = _get_workdir(batch_id)
 
         # Find the starting run_id based on existing runs
@@ -333,7 +327,7 @@ def register(mcp: FastMCP):
 
     @mcp.tool()
     async def magma_stop_campaign(
-        batch_id: int,
+        batch_id: str,
         task_ids: list[str] | None = None,
     ) -> str:
         """Stop running campaigns by batch ID, optionally filtering by task IDs.
@@ -365,7 +359,7 @@ def register(mcp: FastMCP):
 
     @mcp.tool()
     async def magma_get_task_status(
-        batch_id: int,
+        batch_id: str,
         task_ids: list[str] | None = None,
     ) -> str:
         """Check the status of campaign tasks by batch ID.
