@@ -19,31 +19,26 @@ mcp = FastMCP(
     "magma-benchmark",
     instructions=(
         "Magma is a ground-truth fuzzing benchmark. Use the magma_* tools to "
-        "inspect available targets and fuzzers, build Docker images, run fuzzing "
+        "build Docker images, run fuzzing "
         "campaigns, test individual inputs for bug triggers, manage patches, and "
         "collect results. Long-running operations (builds, campaigns) return a "
-        "task_id — poll with magma_get_task_status to check progress. "
-        "Call magma_get_knowledge first to load context about Magma's architecture. "
-        "Call magma_get_api_reference to see all available tools and parameters."
+        "task_id — poll with magma_get_campaign_status to check progress."
     ),
 )
 
 # Register all tool modules
-from mmcp.tools import discovery, build, campaign, results
+from mmcp.tools import build, campaign, results
 
-discovery.register(mcp)
 build.register(mcp)
 campaign.register(mcp)
 results.register(mcp)
 
 # Register all resource modules
 from mmcp.resources import targets, fuzzers, config
-from mmcp.resources import memory as memory_resources
 
 targets.register(mcp)
 fuzzers.register(mcp)
 config.register(mcp)
-memory_resources.register(mcp)
 
 
 # ASGI app for uvicorn --reload
