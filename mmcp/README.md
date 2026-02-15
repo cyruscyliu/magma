@@ -19,12 +19,12 @@ Run the server over HTTP and test it with the FastMCP CLI.
 1. **Start the HTTP server** (change the port if `8000` is in use):
 
 ```bash
-PYTHONPATH=. fastmcp run mmcp/server.py --transport http --host 0.0.0.0 --port 8000 --path /mcp/
+PYTHONPATH=. uvicorn mmcp.server:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 2. **Test as a client (HTTP)**:
 
 ```bash
-python3 mmcp/examples/http_client.py --url http://localhost:8000/mcp/ \
+python3 mmcp/examples/http_client.py --url http://localhost:8000/mcp \
   --tool magma_list_campaigns --args '{}'
 ```
