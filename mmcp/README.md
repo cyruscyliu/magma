@@ -26,5 +26,5 @@ PYTHONPATH=. fastmcp run mmcp/server.py --transport http --host 0.0.0.0 --port 8
 
 ```bash
 python3 mmcp/examples/http_client.py --url http://localhost:8000/mcp/ \
-  --tool magma_list_targets --args '{}'
+  --tool magma_list_campaigns --args '{}'
 ```
