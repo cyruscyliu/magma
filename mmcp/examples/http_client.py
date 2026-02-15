@@ -19,7 +19,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--tool",
-        default="magma_get_knowledge",
+        default="magma_list_campaigns",
         help="Tool name to call",
     )
     parser.add_argument(

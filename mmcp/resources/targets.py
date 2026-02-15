@@ -11,19 +11,42 @@ from ..core.config_parser import parse_configrc, parse_releases
 def register(mcp: FastMCP):
     @mcp.resource("magma://targets")
     async def targets_list() -> str:
-        """List of all target names with summary information."""
+        """List all targets with programs, versions, bugs, and corpus sizes."""
         targets = []
         for name in paths.list_target_names():
             try:
                 config = parse_configrc(name)
+                versions = parse_releases(name)
             except Exception:
                 config = {"programs": [], "program_args": {}}
+                versions = []
+
+            bug_ids = paths.list_bug_ids(name)
+            poc_files = paths.list_poc_files(name)
+            poc_bugs = {p.split(".")[0] for p in poc_files}
+
+            programs = []
+            for prog in config["programs"]:
+                programs.append({
+                    "name": prog,
+                    "args": config["program_args"].get(prog, ""),
+                    "corpus_count": len(paths.list_corpus_files(name, prog)),
+                })
+
+            bugs = []
+            for bid in bug_ids:
+                bugs.append({
+                    "id": bid,
+                    "has_poc": bid in poc_bugs,
+                })
+
             targets.append({
                 "name": name,
-                "programs": config["programs"],
-                "bug_count": len(paths.list_bug_ids(name)),
+                "programs": programs,
+                "versions": versions,
+                "bugs": bugs,
             })
-        return json.dumps(targets, indent=2)
+        return json.dumps({"targets": targets}, indent=2)
 
     @mcp.resource("magma://targets/{target}")
     async def target_detail(target: str) -> str:
@@ -39,17 +62,16 @@ def register(mcp: FastMCP):
             programs.append({
                 "name": prog,
                 "args": config["program_args"].get(prog, ""),
+                "corpus_count": len(paths.list_corpus_files(target, prog)),
             })
 
         bugs = [{"id": b, "has_poc": b in poc_bugs} for b in bug_ids]
-        corpus = {p: len(paths.list_corpus_files(target, p)) for p in config["programs"]}
 
         return json.dumps({
             "name": target,
             "programs": programs,
             "versions": versions,
             "bugs": bugs,
-            "corpus_counts": corpus,
         }, indent=2)
 
     @mcp.resource("magma://targets/{target}/configrc")
