@@ -61,22 +61,25 @@ def _archive_cache(cache_dir: str, ar_dir: str, no_archive: bool) -> None:
         no_archive: If True, move directly. If False, tar then delete cache.
     """
     if not os.path.isdir(cache_dir):
-        return
-    os.makedirs(ar_dir, exist_ok=True)
+        raise FileNotFoundError(f"Cache directory not found: {cache_dir}")
     if no_archive:
-        # Move cache contents directly into ar dir
-        for item in os.listdir(cache_dir):
-            src = os.path.join(cache_dir, item)
-            dst = os.path.join(ar_dir, item)
-            shutil.move(src, dst)
-        shutil.rmtree(cache_dir, ignore_errors=True)
+        # Move the whole run directory to avoid partial archives when a single
+        # entry move fails (e.g. monitor moved but findings left behind).
+        parent = os.path.dirname(ar_dir)
+        os.makedirs(parent, exist_ok=True)
+        if os.path.lexists(ar_dir):
+            shutil.rmtree(ar_dir)
+        shutil.move(cache_dir, ar_dir)
+        if os.path.exists(cache_dir):
+            raise RuntimeError(f"Failed to remove cache directory after move: {cache_dir}")
     else:
+        os.makedirs(ar_dir, exist_ok=True)
         tar_path = os.path.join(ar_dir, "findings.tar")
         subprocess.run(
             ["tar", "-cf", tar_path, "-C", cache_dir, "."],
             check=True, capture_output=True,
         )
-        shutil.rmtree(cache_dir, ignore_errors=True)
+        shutil.rmtree(cache_dir)
 
 
 def _next_run_id(ar_base: str) -> int:
