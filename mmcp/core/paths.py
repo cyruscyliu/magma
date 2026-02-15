@@ -33,6 +33,7 @@ DOCKERFILE = DOCKER_DIR / "Dockerfile"
 BUILD_SH = CAPTAIN_DIR / "build.sh"
 START_SH = CAPTAIN_DIR / "start.sh"
 EXTRACT2_SH = CAPTAIN_DIR / "extract2.sh"
+CAPTAIN_RUNONCE_SH = CAPTAIN_DIR / "runonce.sh"
 RUNONCE_SH = MAGMA_LIB_DIR / "runonce.sh"
 
 LOG_DIR = MAGMA_ROOT / "mmcp" / "logs"
