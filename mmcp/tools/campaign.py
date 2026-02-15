@@ -388,24 +388,6 @@ def register(mcp: FastMCP):
         return json.dumps({"batch_id": batch_id, "tasks": tasks}, indent=2)
 
     @mcp.tool()
-    async def magma_list_active_tasks() -> str:
-        """List all active batches with their running/queued tasks."""
-        batches = []
-        for bid, batch in _batches.items():
-            active = []
-            for tid in batch["task_ids"]:
-                record = task_manager.get(tid)
-                if record and record.status in (TaskStatus.RUNNING, TaskStatus.QUEUED):
-                    active.append(record.to_dict())
-            if active:
-                batches.append({
-                    "batch_id": bid,
-                    "tasks": active,
-                    "count": len(active),
-                })
-        return json.dumps({"batches": batches, "total": sum(b["count"] for b in batches)}, indent=2)
-
-    @mcp.tool()
     async def magma_configure_cpus(
         worker_mode: int = 0,
         max_cpus: int = 0,

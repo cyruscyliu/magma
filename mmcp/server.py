@@ -29,7 +29,7 @@ mcp = FastMCP(
 )
 
 # Register all tool modules
-from mmcp.tools import discovery, build, campaign, testing, results, patches, memory
+from mmcp.tools import discovery, build, campaign, testing, results, patches
 
 discovery.register(mcp)
 build.register(mcp)
@@ -37,7 +37,6 @@ campaign.register(mcp)
 testing.register(mcp)
 results.register(mcp)
 patches.register(mcp)
-memory.register(mcp)
 
 # Register all resource modules
 from mmcp.resources import targets, fuzzers, config
