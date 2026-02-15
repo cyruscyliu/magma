@@ -131,7 +131,6 @@ def register(mcp: FastMCP):
 
         # Use a semaphore to limit concurrency
         sem = asyncio.Semaphore(max_parallel)
-        builds = []
 
         async def spawn_build(fuzzer: str, target: str) -> dict:
             async with sem:
@@ -145,22 +144,20 @@ def register(mcp: FastMCP):
                     cwd=str(paths.MAGMA_ROOT),
                 )
                 return {
-                    "fuzzer": fuzzer,
-                    "target": target,
                     "task_id": record.task_id,
                     "image_name": image_name,
+                    "status": "started",
                 }
 
         # Launch all builds with concurrency control
-        tasks = [spawn_build(f, t) for f, t in pairs]
-        results = await asyncio.gather(*tasks)
-        builds = list(results)
+        coros = [spawn_build(f, t) for f, t in pairs]
+        results = await asyncio.gather(*coros)
 
         return json.dumps({
-            "builds": builds,
-            "total": len(builds),
+            "total": len(results),
             "max_parallel": max_parallel,
-        }, indent=2)
+            "tasks": list(results),
+        })
 
     @mcp.tool()
     async def magma_get_task_log(
@@ -182,22 +179,24 @@ def register(mcp: FastMCP):
         if record is None:
             return json.dumps({"error": f"Task not found: {task_id}"})
 
-        if record.log_file is None or not record.log_file.exists():
-            # Fall back to in-memory buffer
-            lines = list(record.output_buffer)
-            if search:
-                lines = [l for l in lines if search.lower() in l.lower()]
-            if tail > 0:
-                lines = lines[-tail:]
-            return json.dumps({
-                "task_id": task_id,
-                "source": "memory",
-                "line_count": len(lines),
-                "log": "\n".join(lines),
-            })
+        lines = record.log_file.read_text().splitlines() if record.log_file.exists() else []
+        total = len(lines)
 
-        content = record.log_file.read_text()
-        lines = content.splitlines()
+        # Determine status from task record + log parsing for builds
+        status = record.status.value
+        if record.task_type == TaskType.BUILD and status in ("completed", "failed"):
+            # Parse BuildKit log: last non-empty line is the image name on success
+            # Errors show as "#N ERROR" lines
+            has_error = any("ERROR" in l for l in lines)
+            last_line = ""
+            for l in reversed(lines):
+                if l.strip():
+                    last_line = l.strip()
+                    break
+            if has_error or not last_line.startswith("magma/"):
+                status = "failed"
+            else:
+                status = "completed"
 
         if search:
             lines = [l for l in lines if search.lower() in l.lower()]
@@ -206,54 +205,11 @@ def register(mcp: FastMCP):
 
         return json.dumps({
             "task_id": task_id,
-            "source": "disk",
-            "total_lines": len(content.splitlines()),
+            "status": status,
+            "total_lines": total,
             "returned_lines": len(lines),
             "log": "\n".join(lines),
         })
-
-    @mcp.tool()
-    async def magma_get_build_matrix() -> str:
-        """Get a summary matrix of all build tasks showing pass/fail status per fuzzer×target.
-
-        Returns a matrix grid and summary counts. Useful after magma_build_images
-        to see which builds succeeded and which failed.
-        """
-        build_tasks = task_manager.list_by_type(TaskType.BUILD)
-
-        if not build_tasks:
-            return json.dumps({"matrix": {}, "summary": {"total": 0}})
-
-        matrix: dict[str, dict[str, dict]] = {}
-        summary = {"total": 0, "completed": 0, "failed": 0, "running": 0, "cancelled": 0}
-
-        for task in build_tasks:
-            # Parse fuzzer/target from description "build magma/{fuzzer}/{target}"
-            desc = task.description
-            if desc.startswith("build magma/"):
-                parts = desc[len("build magma/"):].split("/", 1)
-                if len(parts) == 2:
-                    fuzzer, target = parts
-                else:
-                    continue
-            else:
-                continue
-
-            if fuzzer not in matrix:
-                matrix[fuzzer] = {}
-
-            matrix[fuzzer][target] = {
-                "status": task.status.value,
-                "task_id": task.task_id,
-                "elapsed_seconds": round(task.elapsed_seconds, 1),
-                "exit_code": task.exit_code,
-            }
-
-            summary["total"] += 1
-            if task.status.value in summary:
-                summary[task.status.value] += 1
-
-        return json.dumps({"matrix": matrix, "summary": summary}, indent=2)
 
     @mcp.tool()
     async def magma_list_images() -> str:

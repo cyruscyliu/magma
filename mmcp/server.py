@@ -49,5 +49,8 @@ config.register(mcp)
 memory_resources.register(mcp)
 
 
+# ASGI app for uvicorn --reload
+app = mcp.streamable_http_app()
+
 if __name__ == "__main__":
     mcp.run()

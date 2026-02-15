@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 from datetime import datetime, timezone
+from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
@@ -18,6 +19,24 @@ _BATCHES_DIR = paths.MAGMA_ROOT / "workdirs"
 
 # In-memory batch registry: batch_id -> {workdir, task_ids}
 _batches: dict[int, dict] = {}
+
+
+def _rebuild_batches() -> None:
+    """Reconstruct _batches from persisted TaskRecords on reload."""
+    for record in task_manager.list_all():
+        bid = record.metadata.get("batch_id")
+        if bid is None:
+            continue
+        bid = int(bid)
+        if bid not in _batches:
+            workdir = str(_BATCHES_DIR / str(bid))
+            _batches[bid] = {"workdir": workdir, "task_ids": []}
+        if record.task_id not in _batches[bid]["task_ids"]:
+            _batches[bid]["task_ids"].append(record.task_id)
+
+
+# Rebuild on module load (covers server reload)
+_rebuild_batches()
 
 
 def _next_batch_id() -> int:
@@ -89,6 +108,7 @@ def register(mcp: FastMCP):
         fuzz_args: str,
         workdir: str,
         run_id: int,
+        batch_id: int,
         no_archive: bool = False,
     ) -> dict:
         """Launch a single campaign instance.
@@ -100,8 +120,11 @@ def register(mcp: FastMCP):
         """
         cache_dir = os.path.join(workdir, "cache", fuzzer, target, program, str(run_id))
         ar_dir = os.path.join(workdir, "ar", fuzzer, target, program, str(run_id))
+        log_dir = os.path.join(workdir, "log")
         os.makedirs(cache_dir, exist_ok=True)
+        os.makedirs(log_dir, exist_ok=True)
 
+        log_file = Path(log_dir) / f"{fuzzer}_{target}_{program}_{run_id}_container.log"
         description = f"campaign {fuzzer}/{target}/{program}/{run_id}"
 
         env = {
@@ -144,6 +167,8 @@ def register(mcp: FastMCP):
                     description=description,
                     cmd=cmd, env=env, cwd=cwd,
                     on_finish=_on_finish,
+                    metadata={"batch_id": batch_id},
+                    log_file=log_file,
                 )
                 async with cpu_allocator._lock:
                     cpus = cpu_allocator._allocated.pop("_pending", set())
@@ -161,6 +186,8 @@ def register(mcp: FastMCP):
                     task_type=TaskType.CAMPAIGN,
                     description=description,
                     on_finish=_on_finish,
+                    metadata={"batch_id": batch_id},
+                    log_file=log_file,
                 )
                 req = await cpu_allocator.enqueue(num_cpus, queued_record.task_id)
 
@@ -191,6 +218,8 @@ def register(mcp: FastMCP):
             description=description,
             cmd=cmd, env=env, cwd=cwd,
             on_finish=_on_finish,
+            metadata={"batch_id": batch_id},
+            log_file=log_file,
         )
 
         return {
@@ -261,7 +290,7 @@ def register(mcp: FastMCP):
             result = await _launch_one(
                 fuzzer, target, program, args, timeout, poll,
                 num_cpus, fuzz_args, workdir, run_id=start_id + i,
-                no_archive=no_archive,
+                batch_id=batch_id, no_archive=no_archive,
             )
             results.append(result)
 
