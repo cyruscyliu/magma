@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+import re
 import shutil
 import subprocess
 import uuid
@@ -86,6 +87,7 @@ def _next_run_id(ar_base: str) -> int:
 
 
 def register(mcp: FastMCP):
+    campaign_re = re.compile(r"campaign ([^/]+)/([^/]+)/([^/]+)/([^/]+)")
 
     async def _launch_one(
         fuzzer: str,
@@ -137,9 +139,11 @@ def register(mcp: FastMCP):
 
         # Build the on_finish callback: archive + optional CPU release
         async def _on_finish(record):
-            _archive_cache(cache_dir, ar_dir, no_archive)
-            if num_cpus > 0:
-                await cpu_allocator.release(record.task_id)
+            try:
+                _archive_cache(cache_dir, ar_dir, no_archive)
+            finally:
+                if num_cpus > 0:
+                    await cpu_allocator.release(record.task_id)
 
         # Auto-allocate num_cpus
         if num_cpus > 0:
@@ -358,7 +362,7 @@ def register(mcp: FastMCP):
         })
 
     @mcp.tool()
-    async def magma_get_task_status(
+    async def magma_get_campaign_status(
         batch_id: str,
         task_ids: list[str] | None = None,
     ) -> str:
@@ -386,6 +390,83 @@ def register(mcp: FastMCP):
                 tasks.append(record.to_dict())
 
         return json.dumps({"batch_id": batch_id, "tasks": tasks}, indent=2)
+
+    @mcp.tool()
+    async def magma_list_campaigns(
+        batch_id: str = "",
+        status: str = "",
+        tail: int = 0,
+    ) -> str:
+        """List existing campaign tasks across all batches or a specific batch.
+
+        Args:
+            batch_id: Optional batch ID. If empty, list campaigns from all batches.
+            status: Optional task status filter: queued/running/completed/failed/cancelled.
+            tail: Optional limit to return only the last N campaigns by start time. 0 means no limit.
+        """
+        batches: list[tuple[str, dict]]
+        if batch_id:
+            if batch_id not in _batches:
+                return json.dumps({"error": f"Batch not found: {batch_id}"})
+            batches = [(batch_id, _batches[batch_id])]
+        else:
+            batches = sorted(_batches.items(), key=lambda item: item[0])
+
+        status_filter = status.strip().lower()
+        allowed = {"queued", "running", "completed", "failed", "cancelled"}
+        if status_filter and status_filter not in allowed:
+            return json.dumps({"error": f"Invalid status filter: {status_filter}"})
+        if tail < 0:
+            return json.dumps({"error": "tail must be >= 0"})
+
+        campaigns = []
+        for bid, batch in batches:
+            seen: set[str] = set()
+            for tid in batch["task_ids"]:
+                if tid in seen:
+                    continue
+                seen.add(tid)
+
+                record = task_manager.get(tid)
+                if record is None:
+                    campaigns.append({
+                        "batch_id": bid,
+                        "task_id": tid,
+                        "error": "Task not found",
+                    })
+                    continue
+                if record.task_type != TaskType.CAMPAIGN:
+                    continue
+                if status_filter and record.status.value != status_filter:
+                    continue
+
+                entry = record.to_dict()
+                entry["batch_id"] = bid
+                entry["workdir"] = batch["workdir"]
+
+                match = campaign_re.fullmatch(record.description)
+                if match:
+                    fuzzer, target, program, run_id = match.groups()
+                    entry["fuzzer"] = fuzzer
+                    entry["target"] = target
+                    entry["program"] = program
+                    entry["run_id"] = run_id
+                    entry["ar_dir"] = os.path.join(
+                        batch["workdir"], "ar", fuzzer, target, program, run_id
+                    )
+                    entry["cache_dir"] = os.path.join(
+                        batch["workdir"], "cache", fuzzer, target, program, run_id
+                    )
+                campaigns.append(entry)
+
+        campaigns.sort(key=lambda c: c.get("started_at", ""))
+        if tail > 0:
+            campaigns = campaigns[-tail:]
+
+        return json.dumps({
+            "count": len(campaigns),
+            "campaigns": campaigns,
+        }, indent=2)
 
     @mcp.tool()
     async def magma_configure_cpus(

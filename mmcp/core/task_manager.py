@@ -37,7 +37,6 @@ class TaskType(str, Enum):
     CAMPAIGN = "campaign"
     EXTRACT = "extract"
     REPORT = "report"
-    GENERIC = "generic"
 
 
 @dataclass
