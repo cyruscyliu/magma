@@ -1,3 +1,5 @@
+TARGET_REPO="https://github.com/libsndfile/libsndfile.git"
+
 PROGRAMS=(sndfile_fuzzer)
 
 sndfile_fuzzer_ARGS="@@"
