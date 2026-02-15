@@ -68,15 +68,11 @@ def register(mcp: FastMCP):
         program: str,
         run_id: str,
     ) -> dict:
-        async def _start_poc_extraction(shared_dir: str) -> dict:
+        async def _run_testcase_bug_analysis(shared_dir: str) -> dict:
             from ..core.config_parser import parse_configrc
 
             if not os.path.isdir(shared_dir):
                 return {"error": f"Shared directory not found: {shared_dir}"}
-
-            poc_dir = os.path.join(workdir, "poc")
-            os.makedirs(poc_dir, exist_ok=True)
-            before = set(os.listdir(poc_dir))
 
             try:
                 config = parse_configrc(target)
@@ -91,14 +87,13 @@ def register(mcp: FastMCP):
                 "PROGRAM": program,
                 "ARGS": args,
                 "SHARED": shared_dir,
-                "POCDIR": poc_dir,
                 "MAGMA": str(paths.MAGMA_ROOT),
             }
 
             merged_env = {**os.environ, **env}
             process = await asyncio.create_subprocess_exec(
                 "bash",
-                str(paths.EXTRACT_SH),
+                str(paths.EXTRACT2_SH),
                 env=merged_env,
                 cwd=str(paths.MAGMA_ROOT),
                 stdout=asyncio.subprocess.PIPE,
@@ -106,50 +101,60 @@ def register(mcp: FastMCP):
             )
             output, _ = await process.communicate()
 
+            text = output.decode("utf-8", errors="replace")
             result = {
-                "poc_dir": poc_dir,
                 "status": "completed" if process.returncode == 0 else "failed",
                 "exit_code": process.returncode,
+                "lines": [],
+                "unparsed_lines": [],
             }
-            after = set(os.listdir(poc_dir))
-            prefix = f"{fuzzer}_{target}_{program}_"
-            created = sorted(after - before)
-            result["pocs"] = [
-                os.path.join(poc_dir, name)
-                for name in created
-                if name.startswith(prefix)
-            ]
+
+            line_re = re.compile(
+                r"^(?P<file>\S+)\s+"
+                r"(?P<bug_id>\S+)\s+reached\s+"
+                r"(?P<reached>\d+)\s+triggered\s+"
+                r"(?P<triggered>\d+)\s*$"
+            )
+            for line in text.splitlines():
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                match = line_re.match(stripped)
+                if not match:
+                    result["unparsed_lines"].append(stripped)
+                    continue
+                result["lines"].append({
+                    "file": match.group("file"),
+                    "bug_id": match.group("bug_id"),
+                    "reached": int(match.group("reached")),
+                    "triggered": int(match.group("triggered")),
+                })
+
             if process.returncode != 0:
-                text = output.decode("utf-8", errors="replace").strip()
-                if text:
-                    result["error"] = text.splitlines()[-1]
+                result["error"] = text.strip().splitlines()[-1] if text.strip() else ""
             return result
 
-        def _map_pocs_to_bugs(
+        def _map_cases_to_bugs(
             bugs: list[dict],
-            poc_paths: list[str],
-        ) -> tuple[list[dict], list[str]]:
-            bug_to_pocs = {b["id"]: [] for b in bugs}
-            new_or_unknown: list[str] = []
-            prefix = f"{fuzzer}_{target}_{program}_"
+            case_lines: list[dict],
+        ) -> list[dict]:
+            bug_to_cases = {b["id"]: [] for b in bugs}
 
-            for poc_path in poc_paths:
-                name = os.path.basename(poc_path)
-                if not name.startswith(prefix):
-                    continue
-                suffix = name[len(prefix):]
-                bug_key = suffix.split(".", 1)[0]
-                if bug_key == "NEW":
-                    new_or_unknown.append(poc_path)
-                    continue
-                if bug_key in bug_to_pocs:
-                    bug_to_pocs[bug_key].append(poc_path)
-                else:
-                    new_or_unknown.append(poc_path)
+            for case in case_lines:
+                bug_key = case["bug_id"]
+                if bug_key in bug_to_cases:
+                    bug_to_cases[bug_key].append(case)
 
             for bug in bugs:
-                bug["pocs"] = bug_to_pocs.get(bug["id"], [])
-            return bugs, new_or_unknown
+                cases = bug_to_cases.get(bug["id"], [])
+                bug["cases"] = cases
+                bug["testcases_that_reached"] = [
+                    c["file"] for c in cases if c.get("reached", 0) > 0
+                ]
+                bug["testcases_that_triggered"] = [
+                    c["file"] for c in cases if c.get("triggered", 0) > 0
+                ]
+            return bugs
 
         campaign_path = os.path.join(workdir, "ar", fuzzer, target, program, run_id)
         if not os.path.isdir(campaign_path):
@@ -231,11 +236,9 @@ def register(mcp: FastMCP):
                 "run_id": run_id,
                 "bugs": bugs
             }
-            result["poc_extraction"] = await _start_poc_extraction(campaign_path)
-            poc_paths = result["poc_extraction"].get("pocs", [])
-            mapped_bugs, new_or_unknown = _map_pocs_to_bugs(bugs, poc_paths)
-            result["bugs"] = mapped_bugs
-            result["new_or_unknown_pocs"] = new_or_unknown
+            result["testcase_analysis"] = await _run_testcase_bug_analysis(campaign_path)
+            case_lines = result["testcase_analysis"].get("lines", [])
+            result["bugs"] = _map_cases_to_bugs(bugs, case_lines)
             return result
         except Exception as e:
             return {"error": f"Failed to parse campaign results: {e}"}
