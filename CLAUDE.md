@@ -508,14 +508,17 @@ python -m mmcp
 }
 ```
 
-### Available Tools (18)
+### Available Tools (11)
 
-**Discovery**: `magma_list_targets`, `magma_get_target_info`, `magma_list_fuzzers`, `magma_list_bugs`, `magma_get_bug_patch`
-**Build**: `magma_build_image`, `magma_list_images`
-**Campaign**: `magma_start_campaign`, `magma_stop_campaign`, `magma_get_task_status`, `magma_list_active_tasks`
-**Testing**: `magma_test_input` (ephemeral container)
-**Results**: `magma_list_campaigns`, `magma_get_campaign_results`, `magma_extract_pocs`, `magma_generate_json`
-**Patches**: `magma_get_patch`, `magma_update_patch`
+**Build**:
+`magma_build_image`, `magma_build_images`, `magma_get_task_log`, `magma_list_images`
+
+**Campaign**:
+`magma_start_campaign`, `magma_stop_campaign`, `magma_get_campaign_status`,
+`magma_list_campaigns`, `magma_configure_cpus`, `magma_cpu_status`
+
+**Results**:
+`magma_get_campaign_results`
 
 ### Available Resources (12 URIs)
 
@@ -527,9 +530,9 @@ python -m mmcp
 
 ### Async Operations
 
-Long-running operations (build, campaign, extract, report) return a `task_id`.
-Poll with `magma_get_task_status(task_id)` to check progress. Use
-`magma_stop_campaign(task_id)` to cancel.
+Long-running operations (build, campaign) return a `task_id`.
+Poll with `magma_get_campaign_status(batch_id, task_ids)` to check progress. Use
+`magma_stop_campaign(batch_id, task_ids)` to cancel.
 
 ---
 
