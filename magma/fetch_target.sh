@@ -39,4 +39,6 @@ else
 fi
 
 cp -r "$TARGET"/repo "$COV"/repo
-cp -r "$TARGET"/src "$COV"/src || echo "No such file or directory"
+if [ -d "$TARGET/src" ]; 
+    then cp -r "$TARGET"/src "$COV"/src; 
+fi
