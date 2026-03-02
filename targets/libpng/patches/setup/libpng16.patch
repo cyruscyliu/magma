@@ -14,10 +14,3 @@
 @@ -521,1 +521,1 @@
 -option WRITE enables WRITE_INT_FUNCTIONS
 +option WRITE disabled
---- a/contrib/oss-fuzz/libpng_read_fuzzer.cc
-+++ b/contrib/oss-fuzz/libpng_read_fuzzer.cc
-@@ -15,3 +15,4 @@
-+#include <stdlib.h>
- #include <stddef.h>
- #include <stdint.h>
- #include <string.h>

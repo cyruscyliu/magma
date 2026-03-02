@@ -24,12 +24,29 @@ git_hosts=(
 host=$(echo "$to_fetch" | awk -F/ '{print $3}')
 
 if [[ " ${git_hosts[*]} " == *" $host "* ]]; then
-    git init "$TARGET/repo"
-    cd "$TARGET/repo" && \
-        git remote add origin "$to_fetch" && \
-        git fetch --depth 1 origin "$to_checkout" && \
-        git checkout "$to_checkout"
+    if [ -d "$TARGET/repo/.git" ]; then
+        cd "$TARGET/repo"
+    else
+        rm -rf "$TARGET/repo"
+        git init "$TARGET/repo"
+        cd "$TARGET/repo"
+    fi
+
+    # Update existing checkout in-place to avoid a full reclone each run.
+    if git remote get-url origin >/dev/null 2>&1; then
+        git remote set-url origin "$to_fetch"
+    else
+        git remote add origin "$to_fetch"
+    fi
+
+    # Remove patch leftovers first; then hard-reset tracked + untracked state.
+    find . -type f \( -name "*.rej" -o -name "*.orig" \) -delete
+    git fetch --depth 1 origin "$to_checkout"
+    git checkout -f "$to_checkout"
+    git reset --hard "$to_checkout"
+    git clean -fdx
 elif [[ "$to_fetch" =~ \.tar\.gz(\?|$) ]]; then
+    rm -rf "$TARGET/repo"
     wget -O "$TARGET"/repo.tar.gz "$to_fetch"
     mkdir "$TARGET"/repo
     tar -xf "$TARGET"/repo.tar.gz --strip-components=1 -C "$TARGET"/repo
@@ -38,7 +55,8 @@ else
     exit
 fi
 
+rm -rf "$COV/repo" "$COV/src"
 cp -r "$TARGET"/repo "$COV"/repo
-if [ -d "$TARGET/src" ]; 
-    then cp -r "$TARGET"/src "$COV"/src; 
+if [ -d "$TARGET/src" ]; then
+    cp -r "$TARGET"/src "$COV"/src
 fi
