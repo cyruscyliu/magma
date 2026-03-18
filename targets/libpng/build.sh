@@ -25,5 +25,6 @@ cp .libs/libpng16.a "$OUT/"
 # build libpng_read_fuzzer.
 $CXX $CXXFLAGS -std=c++11 -I. \
      contrib/oss-fuzz/libpng_read_fuzzer.cc \
+     $TARGET/src/send_compat.cc \
      -o $OUT/libpng_read_fuzzer \
      $LDFLAGS .libs/libpng16.a $LIBS $LIB_FUZZING_ENGINE -lz

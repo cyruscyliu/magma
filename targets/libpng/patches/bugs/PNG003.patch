@@ -1,22 +1,25 @@
 diff --git a/pngrutil.c b/pngrutil.c
-index d5fa08c..b98d69b 100644
+index d5fa08c..9bca96a 100644
 --- a/pngrutil.c
 +++ b/pngrutil.c
-@@ -984,8 +984,14 @@ png_handle_PLTE(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
-    else
-       max_palette_length = PNG_MAX_PALETTE_LENGTH;
- 
+@@ -1030,8 +1030,17 @@ png_handle_PLTE(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
+       /* The cast is safe because 'length' is less than
+        * 3*PNG_MAX_PALETTE_LENGTH
+        */
 +#ifdef MAGMA_ENABLE_FIXES
-    if (num > max_palette_length)
-       num = max_palette_length;
-+#endif
+       const unsigned num = (length > 3U*max_palette_length) ?
+          max_palette_length : (unsigned)length / 3U;
++#else
++      const unsigned num = (unsigned)length / 3U;
 +
 +#ifdef MAGMA_ENABLE_CANARIES
-+   MAGMA_LOG("%MAGMA_BUG%", num > max_palette_length);
++      MAGMA_LOG("%MAGMA_BUG%", num > max_palette_length);
++#endif
++
 +#endif
  
- #ifdef PNG_POINTER_INDEXING_SUPPORTED
-    for (i = 0, pal_ptr = palette; i < num; i++, pal_ptr++)
+       unsigned i, j;
+       png_byte buf[3*PNG_MAX_PALETTE_LENGTH];
 diff --git a/pngset.c b/pngset.c
 index ec75dbe..baf54e6 100644
 --- a/pngset.c
@@ -33,4 +36,3 @@ index ec75dbe..baf54e6 100644
     {
        if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
           png_error(png_ptr, "Invalid palette length");
-
