@@ -51,9 +51,26 @@ def get_first_commit_of_year(repo_path: Path, year: int) -> str:
         cwd=repo_path,
     )
     commits = [x.strip() for x in out.splitlines() if x.strip()]
-    if not commits:
-        raise RuntimeError(f"No commits found in year {year} for {repo_path.name}")
-    return commits[0]
+    if commits:
+        return commits[0]
+
+    # No commits in the target year — fall back to the most recent commit
+    # before the end of that year (e.g. target has not been updated yet in 2026
+    # but has commits from December 2025).
+    out = run(
+        [
+            "git",
+            "rev-list",
+            f"--before={year + 1}-01-01 00:00:00",
+            "-1",
+            "HEAD",
+        ],
+        cwd=repo_path,
+    )
+    fallback = out.strip()
+    if not fallback:
+        raise RuntimeError(f"No commits found up to year {year} for {repo_path.name}")
+    return fallback
 
 
 def get_year_to_tag(repo_path: Path, end_year: int) -> dict[int, str]:
