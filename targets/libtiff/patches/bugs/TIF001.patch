@@ -2,10 +2,10 @@ diff --git a/libtiff/tif_predict.c b/libtiff/tif_predict.c
 index 386b5fe8..23b3be07 100644
 --- a/libtiff/tif_predict.c
 +++ b/libtiff/tif_predict.c
-@@ -344,11 +344,16 @@ static int horAcc8(TIFF *tif, uint8_t *cp0, tmsize_t cc)
+@@ -353,11 +353,16 @@ static int horAcc8(TIFF *tif, uint8_t *cp0, tmsize_t cc)
      tmsize_t stride = PredictorState(tif)->stride;
- 
-     unsigned char *cp = (unsigned char *)cp0;
+
+     uint8_t *cp = cp0;
 +#ifdef MAGMA_ENABLE_FIXES
      if ((cc % stride) != 0)
      {
@@ -16,7 +16,7 @@ index 386b5fe8..23b3be07 100644
 +#ifdef MAGMA_ENABLE_CANARIES
 +    MAGMA_LOG("%MAGMA_BUG%", (cc%stride)!=0);
 +#endif
- 
+
      if (cc > stride)
      {
 @@ -414,11 +419,16 @@ static int horAcc16(TIFF *tif, uint8_t *cp0, tmsize_t cc)
