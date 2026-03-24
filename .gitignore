@@ -6,3 +6,6 @@ cov_out/
 *.pkl
 *.html
 mmcp/logs/
+
+# targets scoped
+targets/*/work/
