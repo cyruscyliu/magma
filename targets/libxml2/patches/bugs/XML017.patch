@@ -2,14 +2,14 @@ diff --git a/parser.c b/parser.c
 index ad035f3c..7bbfaa7f 100644
 --- a/parser.c
 +++ b/parser.c
-@@ -8385,10 +8385,20 @@ xmlParseInternalSubset(xmlParserCtxtPtr ctxt) {
+@@ -8053,8 +8053,18 @@ xmlParseInternalSubset(xmlParserCtxtPtr ctxt) {
      /*
       * We should be at the end of the DOCTYPE declaration.
       */
 +#ifdef MAGMA_ENABLE_FIXES
-     if ((ctxt->wellFormed) && (RAW != '>')) {
- 	xmlFatalErr(ctxt, XML_ERR_DOCTYPE_NOT_FINISHED, NULL);
- 	return;
+     if (RAW != '>') {
+         xmlFatalErr(ctxt, XML_ERR_DOCTYPE_NOT_FINISHED, NULL);
+         return;
      }
 +#endif
 +#ifdef MAGMA_ENABLE_CANARIES
@@ -22,4 +22,3 @@ index ad035f3c..7bbfaa7f 100644
 +#endif
      NEXT;
  }
- 

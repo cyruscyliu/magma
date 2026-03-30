@@ -3,19 +3,19 @@
 # 2. New code: htmlParseData() in HTMLparser.c (commit: 41c10c0cec2ac072897c7d8df0e87fdf4b715586)
 
 # In the old code's name-parser, hitting a non-ASCII character could trigger an encoding switch
-# and buffer reallocation. The if (base != old_base) + recursive call was the only place we ever 
+# and buffer reallocation. The if (base != old_base) + recursive call was the only place we ever
 # restarted the ASCII fast-path, so disabling it re-introduced the "continue with stale pointers" bug.
 
-# In the new unified parser, that same "encoding switch -> must restart locals" logic is centralized 
+# In the new unified parser, that same "encoding switch -> must restart locals" logic is centralized
 # in the goto restart;. Wrapping only the goto restart; under MAGMA_ENABLE_FIXES in theory shoul make
-# the new parser behave just like the old fallback did: it sometimes fails to re-sync after a buffer move, 
+# the new parser behave just like the old fallback did: it sometimes fails to re-sync after a buffer move,
 # leading us to scan off the end of a freed chunk.
 
 diff --git a/HTMLparser.c b/HTMLparser.c
 index b9e176b3..cd4eace9 100644
 --- a/HTMLparser.c
 +++ b/HTMLparser.c
-@@ -2612,6 +2612,7 @@ static xmlChar *
+@@ -2549,6 +2549,7 @@
  htmlParseData(htmlParserCtxtPtr ctxt, htmlAsciiMask mask,
                int comment, int refs, int maxLength) {
      xmlParserInputPtr input = ctxt->input;
@@ -23,17 +23,16 @@ index b9e176b3..cd4eace9 100644
      xmlChar *ret = NULL;
      xmlChar *buffer;
      xmlChar utf8Char[4];
-@@ -2807,8 +2808,12 @@ htmlParseData(htmlParserCtxtPtr ctxt, htmlAsciiMask mask,
-                         xmlFree(guess);
-                     }
+@@ -2754,7 +2755,12 @@
                      input->flags |= XML_INPUT_HAS_ENCODING;
--
+ 
+                     eof = PARSER_PROGRESSIVE(ctxt);
 +#ifdef MAGMA_ENABLE_FIXES
                      goto restart;
 +#endif
 +#ifdef MAGMA_ENABLE_CANARIES
-+	MAGMA_LOG("%MAGMA_BUG%", ctxt->input->base != bug_base);
++                    MAGMA_LOG("%MAGMA_BUG%", ctxt->input->base != bug_base);
 +#endif
                  }
  
-                 size = htmlValidateUtf8(ctxt, in, avail);
+                 size = htmlValidateUtf8(ctxt, in, avail, /* partial */ 0);
