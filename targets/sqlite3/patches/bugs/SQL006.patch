@@ -1,10 +1,10 @@
 diff --git a/src/select.c b/src/select.c
-index cf25c8e678..9521977683 100644
 --- a/src/select.c
 +++ b/src/select.c
-@@ -7975,10 +7975,17 @@ int sqlite3Select(
+@@ -8293,11 +8293,18 @@ int sqlite3Select(
    if( (p->selFlags & (SF_Distinct|SF_Aggregate))==SF_Distinct
-    && sqlite3ExprListCompare(sSort.pOrderBy, pEList, -1)==0
+    && sqlite3CopySortOrder(pEList, sSort.pOrderBy)
+    && sqlite3ExprListCompare(pEList, sSort.pOrderBy, -1)==0
     && OptimizationEnabled(db, SQLITE_GroupByOrder)
 -#ifndef SQLITE_OMIT_WINDOWFUNC
 +#ifdef MAGMA_ENABLE_FIXES
@@ -18,6 +18,6 @@ index cf25c8e678..9521977683 100644
 +    MAGMA_LOG("%MAGMA_BUG%", p->pWin != 0);
 +#endif
 +#endif
-     p->selFlags &= ~SF_Distinct;
+     p->selFlags &= ~(u32)SF_Distinct;
      pGroupBy = p->pGroupBy = sqlite3ExprListDup(db, pEList, 0);
      if( pGroupBy ){
