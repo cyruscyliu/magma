@@ -1,0 +1,6 @@
+<?php
+
+#[AllowDynamicProperties]
+trait Test {}
+
+?>

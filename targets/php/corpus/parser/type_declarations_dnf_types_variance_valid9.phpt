@@ -1,0 +1,13 @@
+<?php
+
+class Test {
+    function method1(): iterable|string {}
+    function method2(): iterable|int {}
+}
+class Test2 extends Test {
+    function method1(): (X&Traversable)|string {}
+    function method2(): int|(X&MyIterator) {}
+}
+
+?>
+===DONE===
