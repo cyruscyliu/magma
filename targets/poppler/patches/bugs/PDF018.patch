@@ -2,18 +2,17 @@ diff --git a/poppler/Annot.cc b/poppler/Annot.cc
 index 0b2733b9..22df46a9 100644
 --- a/poppler/Annot.cc
 +++ b/poppler/Annot.cc
-@@ -6624,7 +6624,14 @@ void AnnotInk::draw(Gfx *gfx, bool printing)
-         appearBBox->setBorderWidth(std::max(1., border->getWidth()));
- 
-         for (const auto &path : inkList) {
+@@ -6718,7 +6718,14 @@ void AnnotInk::generateInkAppearance()
+     }
+
+     for (const auto &path : inkList) {
 +#ifdef MAGMA_ENABLE_FIXES
-             if (path && path->getCoordsLength() != 0) {
+         if (path && path->getCoordsLength() != 0) {
 +#else
 +#ifdef MAGMA_ENABLE_CANARIES
-+            MAGMA_LOG("%MAGMA_BUG%", !path);
++        MAGMA_LOG("%MAGMA_BUG%", !path);
 +#endif
-+            if (path->getCoordsLength() != 0) {
++        if (path->getCoordsLength() != 0) {
 +#endif
-                 appearBuilder.appendf("{0:.2f} {1:.2f} m\n", path->getX(0) - rect->x1, path->getY(0) - rect->y1);
-                 appearBBox->extendTo(path->getX(0) - rect->x1, path->getY(0) - rect->y1);
- 
+             appearBuilder.appendf("{0:.2f} {1:.2f} m\n", path->getX(0) - rect->x1, path->getY(0) - rect->y1);
+             appearBBox->extendTo(path->getX(0) - rect->x1, path->getY(0) - rect->y1);
