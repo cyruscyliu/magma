@@ -19,12 +19,10 @@ try {
 } catch (Error $e) {
     echo $e->getMessage(), "\n";
 }
-try {
-    $test->initProtected();
-} catch (Error $e) {
-    echo $e->getMessage(), "\n";
-}
+$test->initProtected();
+var_dump($test);
 
+$test = new B;
 $test->initPrivate();
 var_dump($test->prop);
 
@@ -53,10 +51,7 @@ class Y extends X {
 }
 
 $test = new Y;
-try {
-    $test->initFromParent();
-} catch (Error $e) {
-    echo $e->getMessage(), "\n";
-}
+$test->initFromParent();
+var_dump($test);
 
 ?>

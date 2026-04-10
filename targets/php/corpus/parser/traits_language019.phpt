@@ -7,4 +7,7 @@ class C1 {
         T1::foo as final;
     }
 }
+class C2 extends C1 {
+    public function foo() {}
+}
 ?>

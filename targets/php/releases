@@ -1,2 +1,2 @@
 php_PIONEER="https://github.com/php/php-src.git"
-php_PIONEER_STABLE_COMMIT="8c303713f13ee83d5ab5d88101880eebe2f5ff58"
+php_PIONEER_STABLE_COMMIT="e49be5f8e2903dbefa262847f1494c8e4c86004e"

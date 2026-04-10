@@ -1,0 +1,36 @@
+<?php
+
+class C {
+    public $a = 1;
+    public $b;
+
+    public function __set($name, $value) {
+        throw new \Exception(__METHOD__);
+    }
+}
+
+function test(string $name, object $obj) {
+    printf("# %s\n", $name);
+
+    $reflector = new ReflectionClass(C::class);
+    $reflector->getProperty('a')->skipLazyInitialization($obj);
+
+    var_dump($obj->a);
+    var_dump(!$reflector->isUninitializedLazyObject($obj));
+    var_dump($obj);
+}
+
+$reflector = new ReflectionClass(C::class);
+$obj = $reflector->newLazyGhost(function () {
+    throw new \Exception('initializer');
+});
+
+test('Ghost', $obj);
+
+$obj = $reflector->newLazyProxy(function () {
+    throw new \Exception('initializer');
+});
+
+test('Proxy', $obj);
+
+?>

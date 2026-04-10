@@ -6,6 +6,7 @@ ob_start(function() {
         $a[] = 2;
     }
     fwrite(STDOUT, "Success");
+    return '';
 });
 
 $a = ["not packed" => 1];

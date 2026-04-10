@@ -1,0 +1,56 @@
+<?php
+
+$test
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+    ->p->p->p->p->p->p->p->p->p->p
+;
+
+?>

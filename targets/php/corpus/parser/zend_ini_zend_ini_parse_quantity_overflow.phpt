@@ -40,3 +40,5 @@ foreach ($tests as $name => $value) {
     print "\n";
     print "----------\n";
 }
+
+?>

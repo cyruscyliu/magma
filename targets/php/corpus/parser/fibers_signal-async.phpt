@@ -11,7 +11,7 @@ pcntl_signal(SIGUSR1, function (): void {
 $fiber = new Fiber(function (): void {
     echo "Fiber start\n";
     posix_kill(posix_getpid(), SIGUSR1);
-    time_nanosleep(1);
+    time_nanosleep(1, 0);
     echo "Fiber end\n";
 });
 

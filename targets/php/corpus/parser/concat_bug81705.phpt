@@ -1,0 +1,13 @@
+<?php
+
+$arr = [0];
+$my_var = str_repeat("a", 1);
+set_error_handler(
+    function() use(&$my_var) {
+        echo("error\n");
+        $my_var = 0x123;
+    }
+);
+$my_var .= $GLOBALS["arr"];
+var_dump($my_var);
+?>

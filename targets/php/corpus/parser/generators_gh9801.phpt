@@ -5,3 +5,4 @@ function a() {
 }
 
 foreach(a() as $v);
+?>

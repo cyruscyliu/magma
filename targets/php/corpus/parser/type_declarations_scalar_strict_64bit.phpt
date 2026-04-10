@@ -30,7 +30,7 @@ $values = [
     [],
     new StdClass,
     new StringCapable,
-    fopen("data:text/plain,foobar", "r")
+    STDERR,
 ];
 
 foreach ($functions as $type => $function) {

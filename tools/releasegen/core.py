@@ -37,8 +37,8 @@ def ensure_repo_cache(repo_url: str, cache_root: Path) -> Path:
 
 
 def get_first_commit_of_year(repo_path: Path, year: int) -> str:
-    start = f"{year}-01-01 00:00:00"
-    end = f"{year}-12-31 23:59:59"
+    start = f"{year}-01-01T00:00:00+0000"
+    end = f"{year}-12-31T23:59:59+0000"
     out = run(
         [
             "git",
@@ -61,7 +61,7 @@ def get_first_commit_of_year(repo_path: Path, year: int) -> str:
         [
             "git",
             "rev-list",
-            f"--before={year + 1}-01-01 00:00:00",
+            f"--before={year + 1}-01-01T00:00:00+0000",
             "-1",
             "HEAD",
         ],

@@ -1,5 +1,8 @@
 <?php
 
-assert_options(ASSERT_WARNING);
-assert(false && ($a **= 2));
+try {
+    assert(false && ($a **= 2));
+} catch (AssertionError $e) {
+    echo 'assert(): ', $e->getMessage(), ' failed', PHP_EOL;
+}
 ?>

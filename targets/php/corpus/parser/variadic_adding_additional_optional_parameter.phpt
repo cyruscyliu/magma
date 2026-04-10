@@ -5,7 +5,7 @@ interface DB {
 }
 
 class MySQL implements DB {
-    public function query($query, string $extraParam = null, string ...$params) { }
+    public function query($query, ?string $extraParam = null, string ...$params) { }
 }
 
 ?>

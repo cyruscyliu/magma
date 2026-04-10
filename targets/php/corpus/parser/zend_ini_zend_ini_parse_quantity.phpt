@@ -26,3 +26,4 @@ foreach (['', ' '] as $leadingWS) {
     }
   }
 }
+?>

@@ -1,4 +1,5 @@
 <?php
+try {
 assert(0 && ($a = function () {
     global $a, $$b;
     static $c, $d = 0;
@@ -13,7 +14,11 @@ assert(0 && ($a = function () {
     yield 1 => 2;
     yield from $x;
 }));
+} catch (AssertionError $e) {
+    echo $e->getMessage(), PHP_EOL;
+}
 
+try {
 assert(0 && ($a = function &(array &$a, ?X $b = null) use ($c,&$d) : ?X {
     abstract class A extends B implements C, D {
         const X = 12;
@@ -58,7 +63,11 @@ assert(0 && ($a = function &(array &$a, ?X $b = null) use ($c,&$d) : ?X {
         }
     }
 }));
+} catch (AssertionError $e) {
+    echo $e->getMessage(), PHP_EOL;
+}
 
+try {
 assert(0 && ($a = function &(array &$a, X $b = null, int|float $c) use ($c,&$d) : X {
     final class A {
         final protected function f2() {
@@ -90,7 +99,11 @@ L0:
         }
     }
 }));
+} catch (AssertionError $e) {
+    echo $e->getMessage(), PHP_EOL;
+}
 
+try {
 assert(0 && ($a = function &(?array &$a, X $b = null) use ($c,&$d) : X {
     class A {
         use T1, T2 {
@@ -102,7 +115,11 @@ assert(0 && ($a = function &(?array &$a, X $b = null) use ($c,&$d) : X {
         use T3;
     }
 }));
+} catch (AssertionError $e) {
+    echo $e->getMessage(), PHP_EOL;
+}
 
+try {
 assert(0 && ($a = function &(array &...$a) {
     declare(A=1,B=2);
     try {
@@ -115,7 +132,11 @@ assert(0 && ($a = function &(array &...$a) {
         echo 3;
     }
 }));
+} catch (AssertionError $e) {
+    echo $e->getMessage(), PHP_EOL;
+}
 
+try {
 assert(0 && ($a = function (): ?static {
     declare(C=1) { echo 1; }
     $x = '\'"`$a';
@@ -139,5 +160,8 @@ assert(0 && ($a = function (): ?static {
     }
     if ($a); else;
 }));
+} catch (AssertionError $e) {
+    echo $e->getMessage(), PHP_EOL;
+}
 
 ?>

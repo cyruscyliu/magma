@@ -41,8 +41,13 @@ function us($test) {
     echo 'done';
 }
 
+function us_dim($test) {
+    unset($test->prop->array[0]);
+    echo 'done';
+}
+
 foreach ([true, false] as $init) {
-    foreach (['r', 'w', 'rw', 'im', 'is', 'us'] as $op) {
+    foreach (['r', 'w', 'rw', 'im', 'is', 'us', 'us_dim'] as $op) {
         $test = new Test();
         if ($init) {
             $test->init();

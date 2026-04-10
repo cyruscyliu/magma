@@ -28,12 +28,12 @@ $f = test_2(); $f();
 function test_3() {
     static $v = "";
     $v .= 'b';
-    echo "Outer function catenates 'b' onto \$v to give $v\n";
+    echo "Outer function concatenates 'b' onto \$v to give $v\n";
     $f = function() use($v) {
         echo "Inner function reckons \$v is $v\n";
     };
     $v .= 'a';
-    echo "Outer function catenates 'a' onto \$v to give $v\n";
+    echo "Outer function concatenates 'a' onto \$v to give $v\n";
     return $f;
 }
 $f = test_3(); $f();

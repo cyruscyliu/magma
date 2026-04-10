@@ -6,13 +6,17 @@ class wrapper {
         return true;
     }
     function stream_eof() {
-        throw new exception();
+        throw new Exception('cannot eof');
     }
 }
 
 stream_wrapper_register("wrap", "wrapper");
 $fp = fopen("wrap://...", "r");
-feof($fp);
 
-echo "Done\n";
+try {
+    feof($fp);
+} catch (Throwable $e) {
+    echo $e::class, ': ', $e->getMessage(), PHP_EOL;
+}
+
 ?>

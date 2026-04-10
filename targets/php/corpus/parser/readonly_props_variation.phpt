@@ -2,9 +2,11 @@
 
 class Test {
     public readonly int $prop;
+    public readonly array $array;
 
     public function init() {
         $this->prop = 1;
+        $this->array = [];
     }
 
     public function r() {
@@ -32,6 +34,11 @@ class Test {
 
     public function us() {
         unset($this->prop);
+        echo 'done';
+    }
+
+    public function us_dim() {
+        unset($this->array[0]);
         echo 'done';
     }
 }
@@ -64,9 +71,14 @@ function us($test) {
     echo 'done';
 }
 
+function us_dim($test) {
+    unset($test->array[0]);
+    echo 'done';
+}
+
 foreach ([true, false] as $init) {
     foreach ([true, false] as $scope) {
-        foreach (['r', 'w', 'rw', 'im', 'is', 'us'] as $op) {
+        foreach (['r', 'w', 'rw', 'im', 'is', 'us', 'us_dim'] as $op) {
             $test = new Test();
             if ($init) {
                 $test->init();

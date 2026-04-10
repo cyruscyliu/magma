@@ -27,7 +27,7 @@ for ($i = 0;  $i < 3; $i ++) {
             }
         }
     } catch (Exception $e) {
-       var_dump("cactched");
+       var_dump("caught");
     }  finally {
        var_dump("finally");
     }

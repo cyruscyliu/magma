@@ -1,6 +1,6 @@
 <?php
-interface RecurisiveFooFar extends RecurisiveFooFar {}
-class A implements RecurisiveFooFar {}
+interface RecursiveFooFar extends RecursiveFooFar {}
+class A implements RecursiveFooFar {}
 
 $a = new A();
 var_dump($a instanceOf A);

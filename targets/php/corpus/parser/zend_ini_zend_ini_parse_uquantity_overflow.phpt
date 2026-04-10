@@ -28,3 +28,5 @@ foreach ($tests as $name => $value) {
 
 printf("# zend_test_zend_ini_parse_uquantity(\"-1\") === -1\n");
 var_dump(zend_test_zend_ini_parse_uquantity("-1") === -1);
+
+?>

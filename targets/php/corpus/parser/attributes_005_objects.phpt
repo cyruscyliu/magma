@@ -69,19 +69,6 @@ try {
 
 echo "\n";
 
-#[Attribute]
-class A4 { }
-
-$ref = new \ReflectionFunction(#[A4(1)] function () { });
-
-try {
-    $ref->getAttributes()[0]->newInstance();
-} catch (\Error $e) {
-    var_dump('ERROR 5', $e->getMessage());
-}
-
-echo "\n";
-
 class A5 { }
 
 $ref = new \ReflectionFunction(#[A5] function () { });

@@ -1,0 +1,44 @@
+<?php
+
+class Test {
+    public $prop2 {
+        get { echo __METHOD__, "\n"; }
+    }
+
+    public $prop3 {
+        get { echo __METHOD__, "\n"; }
+        set { echo __METHOD__, "\n"; }
+    }
+
+    public function __construct(
+        public $prop1,
+    ) {}
+}
+
+$test = new Test(1, 2);
+var_dump($s = serialize($test));
+var_dump($test_u = unserialize($s));
+$test_u->prop3;
+$test_u->prop3 = 42;
+
+$s = 'O:4:"Test":1:{s:5:"prop3";i:42;}';
+var_dump(unserialize($s));
+echo "\n";
+
+// Override implicit hook with explicit.
+class Test2 extends Test {
+    public $prop1 {
+        get { echo __METHOD__, "\n"; }
+    }
+}
+
+$test2 = new Test2(1, 2);
+var_dump($s = serialize($test2));
+var_dump($test2_u = unserialize($s));
+$test2_u->prop1;
+$test2_u->prop1 = 42;
+
+$s = 'O:5:"Test2":1:{s:5:"prop1";i:42;}';
+var_dump(unserialize($s));
+
+?>

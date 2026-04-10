@@ -22,6 +22,9 @@ $f2 = #[A1(9)] function () { };
 
 $f3 = #[A1(10)] fn () => 1;
 
+#[A1(11)]
+const CT_CONSTANT = 'Demo';
+
 $ref = new \ReflectionClass(Foo::class);
 
 $sources = [
@@ -34,7 +37,8 @@ $sources = [
     new \ReflectionObject($object),
     new \ReflectionFunction('f1'),
     new \ReflectionFunction($f2),
-    new \ReflectionFunction($f3)
+    new \ReflectionFunction($f3),
+    new \ReflectionConstant('CT_CONSTANT'),
 ];
 
 foreach ($sources as $r) {

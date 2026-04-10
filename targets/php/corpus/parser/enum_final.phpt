@@ -2,6 +2,7 @@
 
 enum Foo {}
 
-class Bar extends Foo {}
+$final = new ReflectionClass(Foo::class)->isFinal();
+var_dump($final);
 
 ?>

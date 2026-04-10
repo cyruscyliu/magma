@@ -1,7 +1,15 @@
 <?php
 
-// TODO We're missing parentheses for the direct call
-assert((fn() => false)());
-assert((fn&(int... $args): ?bool => $args[0])(false));
+try {
+    assert((fn() => false)());
+} catch (AssertionError $e) {
+    echo 'assert(): ', $e->getMessage(), ' failed', PHP_EOL;
+}
+
+try {
+    assert((fn&(int... $args): ?bool => $args[0])(false));
+} catch (AssertionError $e) {
+    echo 'assert(): ', $e->getMessage(), ' failed', PHP_EOL;
+}
 
 ?>
