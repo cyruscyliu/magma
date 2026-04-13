@@ -60,7 +60,7 @@ diff --git a/ldo.c b/ldo.c
 index f825d959..a146cf5a 100644
 --- a/ldo.c
 +++ b/ldo.c
-@@ -497,7 +497,11 @@ static void rethook (lua_State *L, CallInfo *ci, int nres) {
+@@ -446,7 +446,11 @@ static void rethook (lua_State *L, CallInfo *ci, int nres) {
      int delta = 0;  /* correction for vararg functions */
      int ftransfer;
      if (isLua(ci)) {
@@ -69,7 +69,7 @@ index f825d959..a146cf5a 100644
 +#else
 +      Proto *p = clLvalue(s2v(ci->func.p))->p;
 +#endif
-       if (p->flag & PF_VAHID)
+       if (p->flag & PF_ISVARARG)
          delta = ci->u.l.nextraargs + p->numparams + 1;
      }
 @@ -455,8 +459,13 @@ static void rethook (lua_State *L, CallInfo *ci, int nres) {
@@ -84,8 +84,22 @@ index f825d959..a146cf5a 100644
 +    L->oldpc = ci->previous->u.l.savedpc;
 +#endif
  }
-
-
+ 
+ 
+diff --git a/lstate.c b/lstate.c
+index 0e1cb01e..008ba707 100644
+--- a/lstate.c
++++ b/lstate.c
+@@ -253,7 +253,9 @@ static void preinit_thread (lua_State *L, global_State *g) {
+   L->openupval = NULL;
+   L->status = LUA_OK;
+   L->errfunc = 0;
++#ifdef ENABLE_MAGMA_FIXES
+   L->oldpc = 0;
++#endif
+ }
+ 
+ 
 diff --git a/lstate.h b/lstate.h
 index 1c81b6ed..fe01f0c1 100644
 --- a/lstate.h
@@ -100,16 +114,16 @@ index 1c81b6ed..fe01f0c1 100644
    StkIdRel stack_last;  /* end of stack (last element + 1) */
    StkIdRel stack;  /* stack base */
    UpVal *openupval;  /* list of open upvalues in this stack */
-@@ -300,6 +303,8 @@ struct lua_State {
+@@ -354,7 +357,9 @@ struct lua_State {
    volatile lua_Hook hook;
    ptrdiff_t errfunc;  /* current error handling function (stack index) */
-   l_uint32 nCcalls;  /* number of nested non-yieldable or C calls */
+   l_uint32 nCcalls;  /* number of nested (non-yieldable | C)  calls */
 +#ifdef MAGMA_ENABLE_FIXES
    int oldpc;  /* last pc traced */
 +#endif
-   int nci;  /* number of items in 'ci' list */
    int basehookcount;
    int hookcount;
+   volatile l_signalT hookmask;
 diff --git a/lvm.c b/lvm.c
 index b6b18a69..0a7134ff 100644
 --- a/lvm.c
