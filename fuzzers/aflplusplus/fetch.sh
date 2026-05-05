@@ -6,9 +6,10 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
-# Currently points to the first commit of 2025
-AFLPLUSPLUS_STABLE_HASH=1ddfb1fec2b8aa99886a5de35c07e8f2a7bd8b98
+# Currently points to the first commit of 2026
+AFLPLUSPLUS_STABLE_HASH=5e8278daa453328aeb5c599e0ff359e5057108f0
 
+rm -rf "$FUZZER/repo"
 git clone --no-checkout https://github.com/AFLplusplus/AFLplusplus "$FUZZER/repo"
 git -C "$FUZZER/repo" checkout $AFLPLUSPLUS_STABLE_HASH
 
@@ -36,14 +37,14 @@ patch -p1 -d "$FUZZER/repo" << EOF
  extern unsigned int  *__afl_fuzz_len;
  extern unsigned char *__afl_fuzz_ptr;
 
-@@ -111,7 +111,8 @@ extern unsigned int * __afl_fuzz_len;
+@@ -142,7 +142,8 @@ __attribute__((weak)) void *__asan_region_is_poisoned(void *beg, size_t size);
  __attribute__((weak)) int LLVMFuzzerInitialize(int *argc, char ***argv);
  
  // Notify AFL about persistent mode.
--static volatile char AFL_PERSISTENT[] = "##SIG_AFL_PERSISTENT##";
+-SECTION_RODATA static const char AFL_PERSISTENT[] = "##SIG_AFL_PERSISTENT##";
 +// DISABLED to avoid afl-showmap misbehavior
-+static volatile char AFL_PERSISTENT[] = "##SIG_AFL_NOT_PERSISTENT##";
- int                  __afl_persistent_loop(unsigned int);
++SECTION_RODATA static const char AFL_PERSISTENT[] = "##SIG_AFL_NOT_PERSISTENT##";
+ int                              __afl_persistent_loop(unsigned int);
  
  // Notify AFL about deferred forkserver.
 EOF
