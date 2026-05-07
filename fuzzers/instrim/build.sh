@@ -23,8 +23,9 @@ fi
 # build AFL
 (
     cd "$FUZZER/afl"
-    CC=clang CXX=clang++ make -j $(nproc)
-    CC=clang CXX=clang++ make -j $(nproc) -C llvm_mode
+    AFL_NO_X86=1 CC=clang CXX=clang++ make -j $(nproc)
+    AFL_NO_X86=1 CC=clang CXX=clang++ make -j $(nproc) -C llvm_mode \
+        ../afl-clang-fast ../afl-llvm-pass.so ../afl-llvm-rt.o
 )
 
 # compile afl_driver.cpp
