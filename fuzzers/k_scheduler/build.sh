@@ -12,6 +12,7 @@ if [ ! -d "$FUZZER/repo" ]; then
 fi
 
 cd "$FUZZER/repo/kscheduler/afl_integration/afl-2.52b_kscheduler"
+export AFL_NO_X86=1
 make clean
 make -j $(nproc)
 make -j $(nproc) -C llvm_mode ../afl-llvm-rt.o
