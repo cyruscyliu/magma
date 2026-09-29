@@ -3,3 +3,9 @@ TARGET_REPO="https://gitlab.com/libtiff/libtiff.git"
 PROGRAMS=(tiff_read_rgba_fuzzer tiffcp)
 
 tiffcp_ARGS="-M @@ tmp.out"
+# --- gen-patch harness: tiff_fax_fill_fuzzer ---
+PROGRAMS+=(tiff_fax_fill_fuzzer)
+# --- gen-patch harness: tiff_logluv_encode_fuzzer ---
+PROGRAMS+=(tiff_logluv_encode_fuzzer)
+# --- gen-patch harness: tiff_read_rgba_region_fuzzer ---
+PROGRAMS+=(tiff_read_rgba_region_fuzzer)

@@ -30,3 +30,11 @@ for fuzzer in libxml2_xml_read_memory_fuzzer libxml2_xml_reader_for_file_fuzzer;
       "$TARGET/src/$fuzzer.cc" -o "$OUT/$fuzzer" \
       .libs/libxml2.a $LDFLAGS $LIBS $LIB_FUZZING_ENGINE -lz -llzma -include limits
 done
+# --- gen-patch harness: libxml2_schema_fuzzer ---
+  $CXX $CXXFLAGS -std=c++11 -Iinclude/ -I"$TARGET/src/" \
+      "$TARGET/src/libxml2_schema_fuzzer.cc" -o "$OUT/libxml2_schema_fuzzer" \
+      .libs/libxml2.a $LDFLAGS $LIBS $LIB_FUZZING_ENGINE -lz -llzma -include limits
+# --- gen-patch harness: libxml2_xml_reader_xinclude_fuzzer ---
+  $CXX $CXXFLAGS -std=c++11 -Iinclude/ -I"$TARGET/src/" \
+      "$TARGET/src/libxml2_xml_reader_xinclude_fuzzer.cc" -o "$OUT/libxml2_xml_reader_xinclude_fuzzer" \
+      .libs/libxml2.a $LDFLAGS $LIBS $LIB_FUZZING_ENGINE -lz -llzma -include limits

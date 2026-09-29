@@ -55,3 +55,15 @@ $CXX $CXXFLAGS -std=c++20 \
     "$TARGET/src/pdf_fuzzer.cc" -o "$OUT/pdf_fuzzer" \
     "$WORK/poppler/cpp/libpoppler-cpp.a" "$WORK/poppler/libpoppler.a" "$(find /usr/lib -name 'libfreetype.so' | head -1)" \
     $LDFLAGS $LIBS $LIB_FUZZING_ENGINE -ljpeg -lz -lopenjp2 -lpng -ltiff -llcms2 -lm -lpthread -pthread
+# --- gen-patch harness: pdf_save_page_fuzzer ---
+$CXX $CXXFLAGS -std=c++20 \
+    -I"$WORK/poppler" -I"$WORK/poppler/poppler" -I"$TARGET/repo" -I"$TARGET/repo/poppler" -I"$TARGET/repo/goo" \
+    "$TARGET/src/pdf_save_page_fuzzer.cc" -o "$OUT/pdf_save_page_fuzzer" \
+    "$WORK/poppler/libpoppler.a" "$(find /usr/lib -name 'libfreetype.so' | head -1)" \
+    $LDFLAGS $LIBS $LIB_FUZZING_ENGINE -ljpeg -lz -lopenjp2 -lpng -ltiff -llcms2 -lm -lpthread -pthread
+# --- gen-patch harness: pdf_toc_fuzzer ---
+$CXX $CXXFLAGS -std=c++20 \
+    -I"$WORK/poppler/cpp" -I"$TARGET/repo/cpp" \
+    "$TARGET/src/pdf_toc_fuzzer.cc" -o "$OUT/pdf_toc_fuzzer" \
+    "$WORK/poppler/cpp/libpoppler-cpp.a" "$WORK/poppler/libpoppler.a" "$(find /usr/lib -name 'libfreetype.so' | head -1)" \
+    $LDFLAGS $LIBS $LIB_FUZZING_ENGINE -ljpeg -lz -lopenjp2 -lpng -ltiff -llcms2 -lm -lpthread -pthread

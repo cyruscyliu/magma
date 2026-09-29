@@ -28,3 +28,13 @@ $CXX $CXXFLAGS -std=c++11 -I. \
      $TARGET/src/send_compat.cc \
      -o $OUT/libpng_read_fuzzer \
      $LDFLAGS .libs/libpng16.a $LIBS $LIB_FUZZING_ENGINE -lz
+# --- gen-patch harness: png_image_read_fuzzer ---
+$CXX $CXXFLAGS -std=c++11 -I. \
+     $TARGET/src/png_image_read_fuzzer.cc \
+     -o $OUT/png_image_read_fuzzer \
+     $LDFLAGS .libs/libpng16.a $LIBS $LIB_FUZZING_ENGINE -lz
+# --- gen-patch harness: png_transform_read_fuzzer ---
+$CXX $CXXFLAGS -std=c++11 -I. \
+     $TARGET/src/png_transform_read_fuzzer.cc \
+     -o $OUT/png_transform_read_fuzzer \
+     $LDFLAGS .libs/libpng16.a $LIBS $LIB_FUZZING_ENGINE -lz

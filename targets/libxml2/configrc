@@ -3,3 +3,7 @@ TARGET_REPO="https://gitlab.gnome.org/GNOME/libxml2.git"
 PROGRAMS=(libxml2_xml_read_memory_fuzzer xmllint)
 
 xmllint_ARGS="--valid --oldxml10 --push --memory @@"
+# --- gen-patch harness: libxml2_schema_fuzzer ---
+PROGRAMS+=(libxml2_schema_fuzzer)
+# --- gen-patch harness: libxml2_xml_reader_xinclude_fuzzer ---
+PROGRAMS+=(libxml2_xml_reader_xinclude_fuzzer)

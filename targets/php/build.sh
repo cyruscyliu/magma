@@ -77,3 +77,5 @@ for fuzzerName in `ls sapi/fuzzer/corpus`; do
     mkdir -p "$TARGET/corpus/${fuzzerName}"
     cp sapi/fuzzer/corpus/${fuzzerName}/* "$TARGET/corpus/${fuzzerName}/"
 done
+# --- gen-patch harness: execute ---
+cp "$TARGET/repo/sapi/fuzzer/php-fuzz-execute" "$OUT/execute"
