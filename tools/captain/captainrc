@@ -69,11 +69,15 @@ POLL=5
 # coverage and obtain the coverage by replaying the corpus (default: unset)
 # SOURCE_COVERAGE=1
 
-# [MAGMA_DEBUG]: if set, container entrypoint is switched to a shell. The fuzzer,
-# target and magma folders are mounted as volumes in a separate workdir. Useful
-# for investigating build issues.
-# (default: unset)
-# MAGMA_DEBUG=1
+# [DEBUG_MODE]: if set, start one persistent container instead of a campaign.
+# The repository is mounted at /workspace/magma for agent-driven inspection and
+# editing. Container details are written to <SHARED>/debug.env. Stop the REPL
+# explicitly with `docker rm -f <container>` (default: unset).
+# DEBUG_MODE=1
+
+# [DEBUG_CONTAINER]: stable container name used by DEBUG_MODE. By default it is
+# derived from the selected fuzzer, target, and program.
+# DEBUG_CONTAINER=magma-debug
 
 ###
 ## Campaigns to run

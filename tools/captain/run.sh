@@ -23,6 +23,14 @@ MAGMA=${MAGMA:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" >/dev/null 2>&1 \
 export MAGMA
 source "$MAGMA/tools/captain/common.sh"
 
+DEBUG_MODE=${DEBUG_MODE:-$MAGMA_DEBUG}
+if [ ! -z "$DEBUG_MODE" ]; then
+    export DEBUG_MODE=1
+    export CACHE_ON_DISK=1
+    export NO_ARCHIVE=1
+    export REPEAT=1
+fi
+
 if [ -z "$WORKER_POOL" ]; then
     WORKER_MODE=${WORKER_MODE:-1}
     WORKERS_ALL=($(lscpu -b -p | sed '/^#/d' | sort -u -t, -k ${WORKER_MODE}g | cut -d, -f1))
@@ -105,19 +113,18 @@ start_campaign()
         export SHARED="$CAMPAIGN_CACHEDIR/$CACHECID"
         mkdir -p "$SHARED" && chmod 777 "$SHARED"
 
-        echo_time "Container $FUZZER/$TARGET/$PROGRAM/$ARCID started on CPU $AFFINITY"
-        if [ ! -z "$MAGMA_DEBUG" ]; then
-            "$MAGMA"/tools/captain/start.sh
-        else
-            "$MAGMA"/tools/captain/start.sh &> \
-                "${LOGDIR}/${FUZZER}_${TARGET}_${PROGRAM}_${ARCID}_container.log"
+        if [ ! -z "$DEBUG_MODE" ]; then
+            echo_time "Starting debug REPL for $FUZZER/$TARGET/$PROGRAM"
+            "$MAGMA"/tools/captain/start.sh | tee \
+                "${LOGDIR}/${FUZZER}_${TARGET}_${PROGRAM}_${ARCID}_debug.log"
+            echo_time "Debug REPL is ready; campaign execution and archiving were skipped."
+            return
         fi
-        echo_time "Container $FUZZER/$TARGET/$PROGRAM/$ARCID stopped"
 
-        if [ ! -z "$MAGMA_DEBUG" ]; then
-            echo_time "Magma debug is enabled. Skip to extract the PoC."
-            unset POC_EXTRACT
-        fi
+        echo_time "Container $FUZZER/$TARGET/$PROGRAM/$ARCID started on CPU $AFFINITY"
+        "$MAGMA"/tools/captain/start.sh &> \
+            "${LOGDIR}/${FUZZER}_${TARGET}_${PROGRAM}_${ARCID}_container.log"
+        echo_time "Container $FUZZER/$TARGET/$PROGRAM/$ARCID stopped"
 
         if [ ! -z $POC_EXTRACT ]; then
             "$MAGMA"/tools/captain/extract.sh
@@ -243,8 +250,8 @@ cleanup()
 
 trap cleanup EXIT
 
-if [ ! -z "$MAGMA_DEBUG" ]; then
-    echo_time "Magma debug is enabled. Only the first fuzzer is chosen."
+if [ ! -z "$DEBUG_MODE" ]; then
+    echo_time "Debug mode is enabled. Only the first fuzzer is chosen."
     FUZZERS=(${FUZZERS[0]})
 fi
 
@@ -254,8 +261,8 @@ for FUZZER in "${FUZZERS[@]}"; do
 
     TARGETS=($(get_var_or_default $FUZZER 'TARGETS'))
 
-    if [ ! -z "$MAGMA_DEBUG" ]; then
-        echo_time "Magma debug is enabled. Only the first target is chosen."
+    if [ ! -z "$DEBUG_MODE" ]; then
+        echo_time "Debug mode is enabled. Only the first target is chosen."
         TARGETS=(${TARGETS[0]})
     fi
 
@@ -275,26 +282,21 @@ for FUZZER in "${FUZZERS[@]}"; do
 
         PROGRAMS=($(get_var_or_default $FUZZER $TARGET 'PROGRAMS'))
 
-        if [ ! -z "$MAGMA_DEBUG" ]; then
-            echo_time "Magma debug is enabled. Only the first program is chosen."
+        if [ ! -z "$DEBUG_MODE" ]; then
+            echo_time "Debug mode is enabled. Only the first program is chosen."
             PROGRAMS=(${PROGRAMS[0]})
         fi
 
         for PROGRAM in "${PROGRAMS[@]}"; do
             export PROGRAM
             export ARGS="$(get_var_or_default $FUZZER $TARGET $PROGRAM 'ARGS')"
-            
-            if [ ! -z "$MAGMA_DEBUG" ]; then
-                echo_time "Magma debug is enabled. Only the first instance is running."
-                REPEAT=1
-            fi
 
             echo_time "Starting campaigns for $PROGRAM $ARGS"
             for ((i=0; i<$REPEAT; i++)); do
                 export NUMWORKERS="$(get_var_or_default $FUZZER 'CAMPAIGN_WORKERS')"
                 export AFFINITY=$(allocate_workers)
-                if [ ! -z "$MAGMA_DEBUG" ]; then
-                    echo_time "Magma debug is enabled. Don't run start_ex as a daemon."
+                if [ ! -z "$DEBUG_MODE" ]; then
+                    echo_time "Debug mode is enabled. Starting the REPL in the foreground."
                     start_ex
                 else
                     start_ex &

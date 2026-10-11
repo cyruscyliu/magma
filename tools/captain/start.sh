@@ -14,13 +14,17 @@
 # + env AFFINITY: the CPU to bind the container to (default: no affinity)
 # + env ENTRYPOINT: a custom entry point to launch in the container (default:
 #       $MAGMA/run.sh)
+# + env DEBUG_MODE: start a persistent debug container instead of a campaign
+# + env DEBUG_CONTAINER: name for the persistent debug container
 ##
 
 cleanup() {
-    if [ ! -t 1 ]; then
+    status=$?
+    trap - EXIT
+    if [ -z "$DEBUG_MODE" ] && [ ! -t 1 ]; then
         docker rm -f $container_id &> /dev/null
     fi
-    exit 0
+    exit $status
 }
 
 trap cleanup EXIT SIGINT SIGTERM
@@ -37,15 +41,10 @@ export MAGMA
 source "$MAGMA/tools/captain/common.sh"
 
 IMG_NAME="magma/$FUZZER/$TARGET"
+DEBUG_MODE=${DEBUG_MODE:-$MAGMA_DEBUG}
 
 if [ ! -z $AFFINITY ]; then
     flag_aff="--cpuset-cpus=$AFFINITY --env=AFFINITY=$AFFINITY"
-fi
-
-if [ ! -z "$MAGMA_DEBUG" ]; then
-    echo_time "Old entrypoint: $ENTRYPOINT"
-    ENTRYPOINT="/bin/bash"
-    echo_time "New entrypoint: $ENTRYPOINT"
 fi
 
 if [ ! -z "$ENTRYPOINT" ]; then
@@ -58,10 +57,58 @@ if [ ! -z "$SHARED" ]; then
 fi
 
 
-if [ ! -z "$MAGMA_DEBUG" ]; then
-    flag_volume+=" --volume=$MAGMA/magma:/magma/magma"
-    flag_volume+=" --volume=$MAGMA/fuzzers/$FUZZER:/magma/fuzzers/$FUZZER/workdir"
-    flag_volume+=" --volume=$MAGMA/targets/$TARGET:/magma/targets/$TARGET/workdir"
+if [ ! -z "$DEBUG_MODE" ]; then
+    default_name="magma-debug-$FUZZER-$TARGET-$PROGRAM"
+    DEBUG_CONTAINER=${DEBUG_CONTAINER:-$default_name}
+    DEBUG_CONTAINER=$(tr -c 'a-zA-Z0-9_.-' '-' <<< "$DEBUG_CONTAINER")
+    DEBUG_CONTAINER=${DEBUG_CONTAINER%-}
+
+    if docker container inspect "$DEBUG_CONTAINER" &> /dev/null; then
+        echo "Debug container already exists: $DEBUG_CONTAINER" >&2
+        echo "Use docker exec $DEBUG_CONTAINER /bin/bash -lc '<command>' or remove it first." >&2
+        exit 1
+    fi
+
+    debug_volume=(--volume "$MAGMA:/workspace/magma")
+    if [ -f "$MAGMA/.git" ]; then
+        git_common_dir=$(git -C "$MAGMA" rev-parse --git-common-dir)
+        if [[ "$git_common_dir" != /* ]]; then
+            git_common_dir="$MAGMA/$git_common_dir"
+        fi
+        git_common_dir=$(realpath "$git_common_dir")
+        debug_volume+=(--volume "$git_common_dir:$git_common_dir")
+    fi
+    if [ ! -z "$SHARED" ]; then
+        debug_volume+=(--volume "$SHARED:/magma_shared")
+    fi
+
+    container_id=$(
+        docker run -d --init --name "$DEBUG_CONTAINER" \
+            "${debug_volume[@]}" \
+            --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+            --env=DEBUG_MODE=1 --env=MAGMA_WORKSPACE=/workspace/magma \
+            --env=PROGRAM="$PROGRAM" --env=ARGS="$ARGS" \
+            --env=FUZZARGS="$FUZZARGS" --env=POLL="$POLL" --env=TIMEOUT="$TIMEOUT" \
+            $flag_aff --entrypoint=/bin/bash "$IMG_NAME" \
+            -lc 'trap "exit 0" TERM INT; while :; do sleep 3600 & wait $!; done'
+    )
+    container_id=$(cut -c-12 <<< "$container_id")
+
+    if [ ! -z "$SHARED" ]; then
+        cat > "$SHARED/debug.env" <<EOF
+DEBUG_CONTAINER_ID=$container_id
+DEBUG_CONTAINER_NAME=$DEBUG_CONTAINER
+DEBUG_WORKSPACE=/workspace/magma
+EOF
+    fi
+
+    echo "DEBUG_CONTAINER_ID=$container_id"
+    echo "DEBUG_CONTAINER_NAME=$DEBUG_CONTAINER"
+    echo "DEBUG_WORKSPACE=/workspace/magma"
+    echo "Run commands: docker exec $DEBUG_CONTAINER /bin/bash -lc '<command>'"
+    echo "Interactive shell: docker exec -it $DEBUG_CONTAINER /bin/bash"
+    echo "Stop REPL: docker rm -f $DEBUG_CONTAINER"
+    exit 0
 fi
 
 if [ -t 1 ]; then
