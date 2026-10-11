@@ -1,6 +1,6 @@
 ---
 name: magma
-description: Build and run Magma fuzzing campaigns with Captain, inspect campaign results, and collect source-based coverage. Use for Magma fuzzer/target experiments and troubleshooting.
+description: Build and run Magma fuzzing campaigns with Captain, inspect campaign results, collect source-based coverage, replay stored PoCs, and debug via a persistent REPL. Use for Magma fuzzer/target experiments and troubleshooting.
 ---
 
 # Magma
@@ -37,6 +37,16 @@ Run the campaign normally. After fuzzing, Magma replays the queue and writes the
 - `coverage-reports.json`
 
 Also inspect `findings/`, `monitor/`, and the Captain build/container logs. Treat a successful fuzz run without coverage files as a build/configuration failure; first confirm the image was built with `SOURCE_COVERAGE=1`.
+
+## PoC Replay
+
+Replays the stored PoCs (`targets/<target>/pocs/<BUG>.crash`) through their bound fuzzing harnesses and verifies each one triggers its bug via the Magma oracle (canaries). No campaign is run; the standard campaign image is reused.
+
+```bash
+FUZZER=aflplusplus tools/captain/run.sh workdir/poc.captainrc
+```
+
+In the captainrc set `POC_MODE=1`, `POC_TARGETS=(lua)`, and optionally `POC_FUZZER`. Per-bug harness bindings go in `tools/captain/poc/configs/<target>.conf` as `{BUG}_PROGRAM`; unbound PoCs are replayed through every program in `targets/<target>/configrc`. Output lines report `PoC <target>/<BUG> triggered <BUG> through harness <program>` and `No PoC stored for <target>/<BUG>`; the run exits non-zero if any PoC fails to trigger.
 
 ## Debug REPL
 
