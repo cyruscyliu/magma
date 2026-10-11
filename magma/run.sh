@@ -83,8 +83,6 @@ echo "Campaign terminated at $(date '+%F %R')"
 
 kill $(jobs -p)
 
-chmod -R a+rX "$SHARED/findings"
-
 if [ ! -z $SOURCE_COVERAGE ]; then
     $MAGMA/coverage.sh
 fi

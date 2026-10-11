@@ -1,3 +1,1 @@
-TARGET_REPO="https://github.com/openssl/openssl.git"
-
 PROGRAMS=(asn1 asn1parse bignum server client x509)
