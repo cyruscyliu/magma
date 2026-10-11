@@ -118,10 +118,14 @@ def generate_target_release(
     try:
         repo_path = ensure_repo_cache(spec.url, cache_root)
         stable = get_first_commit_of_year(repo_path, end_year - 1)
-        first_commits = {
-            year: get_first_commit_of_year(repo_path, year)
-            for year in range(start_year, end_year)
-        }
+        first_commits: dict[int, str] = {}
+        for year in range(start_year, end_year):
+            try:
+                first_commits[year] = get_first_commit_of_year(repo_path, year)
+            except RuntimeError:
+                prev = first_commits.get(year - 1)
+                if prev:
+                    first_commits[year] = prev
         tags = get_year_to_tag(repo_path, end_year)
         lines = build_releases_lines(
             target_name=spec.name,
@@ -167,10 +171,14 @@ def generate_target_releases(
         for spec in specs:
             repo_path = ensure_repo_cache(spec.url, cache_root)
             stable = get_first_commit_of_year(repo_path, end_year - 1)
-            first_commits = {
-                year: get_first_commit_of_year(repo_path, year)
-                for year in range(start_year, end_year)
-            }
+            first_commits: dict[int, str] = {}
+            for year in range(start_year, end_year):
+                try:
+                    first_commits[year] = get_first_commit_of_year(repo_path, year)
+                except RuntimeError:
+                    prev = first_commits.get(year - 1)
+                    if prev:
+                        first_commits[year] = prev
             tags = get_year_to_tag(repo_path, end_year)
             lines = build_releases_lines(
                 target_name=spec.name,
