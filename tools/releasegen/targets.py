@@ -75,6 +75,7 @@ def build_releases_lines(
     end_year: int,
     stable_commit: str,
     year_to_tag: dict[int, str],
+    first_commits: dict[int, str] | None = None,
 ) -> list[str]:
     lines = [
         f'{target_name}_PIONEER="{repo_url}"\n',
@@ -84,6 +85,11 @@ def build_releases_lines(
         lines.append(f'{target_name}_LEGACY_{year}="{repo_url}"\n')
         if year in year_to_tag:
             lines.append(f'{target_name}_LEGACY_{year}_TAG="{year_to_tag[year]}"\n')
+        if first_commits and year in first_commits:
+            lines.append(
+                f'{target_name}_LEGACY_{year}_STABLE_COMMIT='
+                f'"{first_commits[year]}"\n'
+            )
     return lines
 
 
@@ -111,7 +117,11 @@ def generate_target_release(
     cache_root = Path(tempfile.mkdtemp(prefix="magma_releasegen_"))
     try:
         repo_path = ensure_repo_cache(spec.url, cache_root)
-        stable = get_first_commit_of_year(repo_path, end_year)
+        stable = get_first_commit_of_year(repo_path, end_year - 1)
+        first_commits = {
+            year: get_first_commit_of_year(repo_path, year)
+            for year in range(start_year, end_year)
+        }
         tags = get_year_to_tag(repo_path, end_year)
         lines = build_releases_lines(
             target_name=spec.name,
@@ -120,6 +130,7 @@ def generate_target_release(
             end_year=end_year,
             stable_commit=stable,
             year_to_tag=tags,
+            first_commits=first_commits,
         )
         releases_path = targets_dir / spec.name / "releases"
         if not dry_run:
@@ -155,7 +166,11 @@ def generate_target_releases(
     try:
         for spec in specs:
             repo_path = ensure_repo_cache(spec.url, cache_root)
-            stable = get_first_commit_of_year(repo_path, end_year)
+            stable = get_first_commit_of_year(repo_path, end_year - 1)
+            first_commits = {
+                year: get_first_commit_of_year(repo_path, year)
+                for year in range(start_year, end_year)
+            }
             tags = get_year_to_tag(repo_path, end_year)
             lines = build_releases_lines(
                 target_name=spec.name,
@@ -164,6 +179,7 @@ def generate_target_releases(
                 end_year=end_year,
                 stable_commit=stable,
                 year_to_tag=tags,
+                first_commits=first_commits,
             )
             created.append(write_target_releases(targets_dir / spec.name, spec.name, lines))
     finally:

@@ -9,9 +9,9 @@ from pathlib import Path
 
 
 def compute_cycle_end_year(start_year: int) -> int:
-    """Return cycle-aligned end year (e.g., 2025, 2028, 2031 for start=2022)."""
+    """Return exclusive end year; legacy anchors cover every year through the current one."""
     current_year = datetime.now().year
-    return start_year + (((current_year - start_year) // 3) * 3)
+    return max(start_year, current_year) + 1
 
 
 def run(cmd: list[str], cwd: Path | None = None) -> str:
