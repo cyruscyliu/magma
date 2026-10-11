@@ -17,8 +17,8 @@ subprocess.check_call([sys.executable, "-m", "pip", "install", "gitpython"])
 from git import Repo  # type: ignore # noqa: E402
 
 START_YEAR = 2022
-# If START_YEAR=2022, END_YEAR year can be 2025, 2028, 2031, etc. in steps of 3.
-END_YEAR = START_YEAR + (((datetime.now().year - START_YEAR) // 3) * 3)
+# Snapshots are anchored every year; the current year is always included.
+END_YEAR = datetime.now().year + 1
 
 links = {
     "libpng": "https://github.com/pnggroup/libpng.git",
@@ -42,7 +42,9 @@ def clone_repo(repo_url):
 
     repo = None
     if not os.path.exists(local_path):
-        repo = Repo.clone_from(repo_url, local_path)
+        repo = Repo.clone_from(
+            repo_url, local_path, multi_options=["--filter=blob:none"]
+        )
         print(f"Cloned {repo_url}")
     else:
         repo = Repo(local_path)
@@ -60,7 +62,7 @@ def get_tags(repo):
             year_to_tag[year] = tag.name
 
     year_to_tag_sorted = dict(sorted(year_to_tag.items()))
-    min_year = list(year_to_tag_sorted.keys())[0]
+    min_year = list(year_to_tag_sorted.keys())[0] if year_to_tag_sorted else START_YEAR
 
     # fill the gaps
     last_tag = 0
@@ -88,7 +90,7 @@ for target, link in links.items():
         repo = clone_repo(link)
         year_to_tag = get_tags(repo)
 
-        latest_year = max(year_to_tag.keys())
+        latest_year = max(year_to_tag.keys(), default=datetime.now().year)
         stable_hash = get_first_commit_of_year(repo, latest_year)
 
         print(f"Got tags and latest commit of {target}")
@@ -98,7 +100,12 @@ for target, link in links.items():
         ]
         for i in range(START_YEAR, END_YEAR):
             releases.append(f'{target}_LEGACY_{i}="{link}"\n')
-            releases.append(f'{target}_LEGACY_{i}_TAG="{year_to_tag[i]}"\n')
+            if i in year_to_tag:
+                releases.append(f'{target}_LEGACY_{i}_TAG="{year_to_tag[i]}"\n')
+            releases.append(
+                f'{target}_LEGACY_{i}_STABLE_COMMIT='
+                f'"{get_first_commit_of_year(repo, i)}"\n'
+            )
     else:  # predefined
         assert isinstance(link, dict)
         releases = [
