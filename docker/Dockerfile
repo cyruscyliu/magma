@@ -16,6 +16,10 @@ ENV OUT		/magma_out
 ENV COV		/magma_cov
 ENV SHARED 	/magma_shared
 
+ARG source_coverage
+ENV SOURCE_COVERAGE ${source_coverage}
+ENV SOURCE_COVERAGE_FLAGS "-fprofile-instr-generate -fcoverage-mapping"
+
 ENV CC  /usr/bin/gcc
 ENV CXX /usr/bin/g++
 ENV LD /usr/bin/ld
@@ -65,6 +69,9 @@ COPY --chown=magma:magma ${magma_root}/${target_path} ${TARGET}/
 RUN ${TARGET}/preinstall.sh
 USER magma:magma
 RUN ${TARGET}/fetch.sh
+RUN if [ -n "${SOURCE_COVERAGE}" ]; then \
+        cp -a "${TARGET}/." "${COV}/"; \
+    fi
 RUN ${MAGMA}/apply_patches.sh
 
 ## Configuration parameters
@@ -83,10 +90,6 @@ ENV CFLAGS ${BUILD_FLAGS}
 ENV CXXFLAGS ${BUILD_FLAGS}
 ENV LIBS -l:magma.o -lrt
 ENV LDFLAGS -L"${OUT}" -g
-
-ARG source_coverage
-ENV SOURCE_COVERAGE ${source_coverage:+1}
-ENV SOURCE_COVERAGE_FLAGS ${source_coverage:+"-fprofile-instr-generate -fcoverage-mapping"}
 
 RUN ${FUZZER}/instrument.sh
 

@@ -19,5 +19,7 @@ $CC $CFLAGS -g -O0 -D"MAGMA_STORAGE=\"$MAGMA_STORAGE\"" "$MAGMA/src/monitor.c" \
 
 rm "$OUT/pre_storage.o"
 
-$CC $CFLAGS -shared "$MAGMA/src/source_coverage.c" \
-    -fPIC -o $COV/source_coverage.so -ldl
+if [ -n "$SOURCE_COVERAGE" ]; then
+    $CC $CFLAGS -shared "$MAGMA/src/source_coverage.c" \
+        -fPIC -o "$COV/source_coverage.so" -ldl
+fi
