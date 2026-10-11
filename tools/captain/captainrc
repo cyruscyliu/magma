@@ -65,6 +65,21 @@ POLL=5
 # (default: unset)
 # POC_EXTRACT=1
 
+# [POC_MODE]: if set, replay the stored PoCs (targets/$t/pocs/$BUG.crash)
+# through their bound fuzzing harnesses, built with the Magma oracle (canaries)
+# enabled, and verify that each PoC reliably triggers its forward-ported bug.
+# No fuzzing campaigns are run in this mode. (default: unset)
+# POC_MODE=1
+
+# [POC_TARGETS]: for which targets the PoCs should be replayed. Per-bug harness
+# bindings can be provided in tools/captain/poc/configs/<TARGET>.conf
+# (default: no targets)
+# POC_TARGETS=(libpng libtiff)
+
+# [POC_FUZZER]: fuzzer used to build the PoC images (default: first FUZZERS
+# entry)
+# POC_FUZZER=aflplusplus
+
 # [SOURCE_COVERAGE]: if set, instrument the target for the source-based code
 # coverage and obtain the coverage by replaying the corpus (default: unset)
 # SOURCE_COVERAGE=1

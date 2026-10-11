@@ -59,6 +59,13 @@ shopt -s nullglob
 rm -f "$LOCKDIR"/*
 shopt -u nullglob
 
+# PoC mode: replay the stored PoCs through their bound harnesses instead of
+# running fuzzing campaigns
+if [ ! -z "$POC_MODE" ]; then
+    . "$MAGMA"/tools/captain/poc/run.sh
+    exit 0
+fi
+
 export MUX_TAR=magma_tar
 export MUX_CID=magma_cid
 
