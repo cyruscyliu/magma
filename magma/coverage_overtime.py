@@ -46,7 +46,12 @@ def merge_profdata_to_profraw(corpus_dir, profdata_path, timestamp):
         raise FileNotFoundError("No .profdata files found to merge.")
 
     cmd_merge = ["llvm-profdata", "merge", "-output", profraw_path] + profdata_files
-    result = subprocess.run(cmd_merge, capture_output=True, text=True)
+    result = subprocess.run(
+        cmd_merge,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
     if result.returncode != 0:
         raise RuntimeError(f"llvm-profdata merge failed:\n{result.stderr}")
 
@@ -62,7 +67,12 @@ def generate_json_report(profraw_path, binary_path, output_json_path):
         f"-instr-profile={profraw_path}",
         binary_path,
     ]
-    result_cov = subprocess.run(cmd_cov, capture_output=True, text=True)
+    result_cov = subprocess.run(
+        cmd_cov,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
     if result_cov.returncode != 0:
         raise RuntimeError(f"llvm-cov export failed:\n{result_cov.stderr}")
 
@@ -74,9 +84,9 @@ def parse_coverage_from_json(json_path):
     with open(json_path) as f:
         data = json.load(f)
     totals = data.get("data", [{}])[0].get("totals", {})
-    branches = totals.get("branches", {})
-    covered = branches.get("covered", 0)
-    percent = branches.get("percent", 0.0)
+    coverage = totals.get("branches") or totals.get("regions", {})
+    covered = coverage.get("covered", 0)
+    percent = coverage.get("percent", 0.0)
     return covered, percent
 
 
