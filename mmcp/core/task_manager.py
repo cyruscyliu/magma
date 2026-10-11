@@ -233,16 +233,17 @@ class TaskManager:
 
         # Wait for process to finish
         exit_code = await process.wait()
-        record.exit_code = exit_code
-        record.status = TaskStatus.COMPLETED if exit_code == 0 else TaskStatus.FAILED
-        record.finished_at = datetime.now(timezone.utc)
-        self._save()
+        if record.status == TaskStatus.RUNNING:
+            record.exit_code = exit_code
+            record.status = TaskStatus.COMPLETED if exit_code == 0 else TaskStatus.FAILED
+            record.finished_at = datetime.now(timezone.utc)
+            self._save()
 
-        if record._on_finish:
-            try:
-                await record._on_finish(record)
-            except Exception:
-                pass
+            if record._on_finish:
+                try:
+                    await record._on_finish(record)
+                except Exception:
+                    pass
 
     def register_queued(
         self,

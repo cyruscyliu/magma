@@ -54,7 +54,10 @@ def _extract_monitor_from_tarball(tarball: str, monitor_dir: str) -> int:
 def _read_monitor_rows(monitor_dir: str) -> list[tuple[int, dict[str, str]]]:
     """Read monitor CSV snapshots as (timestamp_s, row_dict)."""
     rows: list[tuple[int, dict[str, str]]] = []
-    files = [f for f in os.listdir(monitor_dir) if f.isdigit()]
+    try:
+        files = [f for f in os.listdir(monitor_dir) if f.isdigit()]
+    except OSError:
+        return rows
     files.sort(key=int)
 
     for fname in files:
