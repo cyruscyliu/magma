@@ -5,4 +5,3 @@ tools/report_df/out/
 cov_out/
 *.pkl
 *.html
-mmcp/logs/
