@@ -6,8 +6,12 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
+DDFUZZ_STABLE_HASH=319f702e9a2317970d829e458ec6d035f0aeb134
+
+rm -rf "$FUZZER/repo"
 git clone --no-checkout https://github.com/elManto/DDFuzz "$FUZZER/repo"
-git -C "$FUZZER/repo" checkout 319f702e9a2317970d829e458ec6d035f0aeb134
+# Currently points to latest HEAD (no 2026 commits; repo last active before 2026)
+git -C "$FUZZER/repo" checkout "$DDFUZZ_STABLE_HASH"
 
 # Fix: CMake-based build systems fail with duplicate (of main) or undefined references (of LLVMFuzzerTestOneInput)
 sed -i '{s/^int main/__attribute__((weak)) &/}' $FUZZER/repo/utils/aflpp_driver/aflpp_driver.c

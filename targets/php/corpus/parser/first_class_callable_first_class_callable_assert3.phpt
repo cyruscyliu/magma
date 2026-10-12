@@ -1,0 +1,5 @@
+<?php
+
+assert(new class(...) {});
+
+?>

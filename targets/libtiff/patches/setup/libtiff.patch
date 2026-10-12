@@ -1,11 +1,15 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -702,8 +702,6 @@
- add_subdirectory(port)
- add_subdirectory(libtiff)
- add_subdirectory(tools)
--add_subdirectory(test)
--add_subdirectory(contrib)
+@@ -151,12 +151,6 @@
+ if(tiff-tools)
+   add_subdirectory(tools)
+ endif()
+-if(tiff-tests)
+-  add_subdirectory(test)
+-endif()
+-if(tiff-contrib)
+-  add_subdirectory(contrib)
+-endif()
  add_subdirectory(build)
- add_subdirectory(man)
- add_subdirectory(html)
+ if(tiff-docs)
+   add_subdirectory(doc)

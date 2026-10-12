@@ -1,0 +1,17 @@
+<?php
+
+abstract class A {
+    public abstract $prop {
+        get;
+        set {}
+    }
+}
+
+class B extends A {
+    public $prop {
+        get {}
+    }
+}
+
+?>
+===DONE===

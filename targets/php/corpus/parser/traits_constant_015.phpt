@@ -1,0 +1,15 @@
+<?php
+
+trait TestTrait1 {
+    public final const Constant = 123;
+}
+
+class BaseClass1 {
+    public final const Constant = 123;
+}
+
+class DerivedClass1 extends BaseClass1 {
+    use TestTrait1;
+}
+
+?>

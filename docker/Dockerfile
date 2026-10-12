@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:24.04
 
 # TODO remove sudo for user "magma" to avoid unwanted priv escalation from
 # other attack vectors.
@@ -30,6 +30,9 @@ ENV RANLIB /usr/bin/ranlib
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
+# Ubuntu 24.04 reserves UID/GID 1000 for its default user. Free them so
+# captain can continue building images with the invoking user's IDs.
+RUN if id -u ubuntu >/dev/null 2>&1; then userdel -r ubuntu; fi
 RUN mkdir -p /home && \
 	groupadd -g ${GROUP_ID} magma && \
 	useradd -l -u ${USER_ID} -K UMASK=0000 -d /home -g magma magma && \
@@ -60,12 +63,13 @@ RUN ${FUZZER}/preinstall.sh
 USER magma:magma
 RUN ${FUZZER}/fetch.sh
 RUN ${FUZZER}/build.sh
+RUN if [ -f ${FUZZER}/postinstall.sh ]; then /bin/bash ${FUZZER}/postinstall.sh; fi
 
 ARG target_name
 ARG target_path=targets/${target_name}
 ENV TARGET_NAME ${target_name}
 ENV TARGET 	    ${MAGMA_R}/${target_path}
-ARG target_version
+ARG target_version=PIONEER
 ENV TARGET_VERSION=${target_version}
 USER root:root
 RUN mkdir -p ${TARGET} && chown magma:magma ${TARGET}

@@ -1,0 +1,2 @@
+poppler_PIONEER="https://gitlab.freedesktop.org/poppler/poppler.git"
+poppler_PIONEER_STABLE_COMMIT="47d94f39b9975fa9b99fbb39e4e9a8153ea636a6"

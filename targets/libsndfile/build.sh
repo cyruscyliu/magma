@@ -9,12 +9,12 @@ set -e
 ##
 
 if [ ! -d "$TARGET/repo" ]; then
-    echo "fetch.sh must be executed first."
+    echo "fetch_target.sh must be executed first."
     exit 1
 fi
 
 cd "$TARGET/repo"
-./autogen.sh
+autoreconf -f -i
 ./configure --disable-shared --enable-ossfuzzers
 make -j$(nproc) clean
 make -j$(nproc) ossfuzz/sndfile_fuzzer

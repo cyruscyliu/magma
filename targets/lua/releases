@@ -1,0 +1,2 @@
+lua_PIONEER="https://github.com/lua/lua.git"
+lua_PIONEER_STABLE_COMMIT="962f444a755882ecfc24ca7e96ffe193d64ed12d"

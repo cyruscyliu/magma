@@ -1,0 +1,5 @@
+<?php
+
+$x = new readonly readonly class {};
+
+?>

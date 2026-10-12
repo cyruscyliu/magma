@@ -4,6 +4,7 @@
 # Pre-requirements:
 # - env FUZZER: fuzzer name (from fuzzers/)
 # - env TARGET: target name (from targets/)
+# + env TARGET_VERSION: version from target releases (default: PIONEER)
 # + env MAGMA: path to magma root (default: ../../)
 # + env ISAN: if set, build the benchmark with ISAN/fatal canaries (default:
 #       unset)
@@ -15,6 +16,7 @@ if [ -z $FUZZER ] || [ -z $TARGET ]; then
     echo '$FUZZER and $TARGET must be specified as environment variables.'
     exit 1
 fi
+TARGET_VERSION=${TARGET_VERSION:-PIONEER}
 IMG_NAME="magma/$FUZZER/$TARGET"
 MAGMA=${MAGMA:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" >/dev/null 2>&1 \
     && pwd)"}

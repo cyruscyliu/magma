@@ -1,0 +1,48 @@
+# Codebase versions used for the following explaination:
+# 1. Old code: sqlite3_str_vappendf in printf.c (tarball: https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=8c432642572c8c4b)
+# 2. New code: sqlite3FpDecode in util.c (commit: 66985fb8fff34b7d46980202b9a245f3bb9db26a)
+
+# In this bug, if one passed a huge precision, we would get a correspondingly huge idx and an equally 
+# large loop of while(idx >= 10). 
+# However, in the new code, the rounding logic is moved to sqlite3FpDecode in src/util.c and also isolated
+# from the precision value itself.
+# (https://github.com/sqlite/sqlite/blob/d7324103b196c572a98724a5658970b4000b8c39/src/util.c#L1017)
+# There is no idx = precision; while(idx>=10){} construct in the new floating-point decoder. sqlite3FpDecode
+# uses the iRound and mxRound variables for the rounding process. So, even if precision is huge, iRound is 
+# forced down to 16 or 26, and we you never iterate more than that many digits. Furthermore,  While 
+# szBufNeeded can grow, it only affects allocation size and not the core decode/round performance or buffer safety.
+
+# Therefore the patch is no longer applicable on the current codebase and cannot be updated without backporting.
+
+diff --git a/src/printf.c b/src/printf.c
+index fc77f68df..a22223d75 100644
+--- a/src/printf.c
++++ b/src/printf.c
+@@ -522,8 +522,12 @@ void sqlite3_str_vappendf(
+           prefix = flag_prefix;
+         }
+         if( xtype==etGENERIC && precision>0 ) precision--;
++#ifdef MAGMA_ENABLE_FIXES
+         testcase( precision>0xfff );
+         idx = precision & 0xfff;
++#else
++        idx = precision;
++#endif
+         rounder = arRound[idx%10];
+         while( idx>=10 ){ rounder *= 1.0e-10; idx -= 10; }
+         if( xtype==etFLOAT ){
+@@ -585,7 +589,14 @@ void sqlite3_str_vappendf(
+         }
+         {
+           i64 szBufNeeded;           /* Size of a temporary buffer needed */
++#ifdef MAGMA_ENABLE_FIXES
++          szBufNeeded = MAX(e2,0)+(i64)precision+(i64)width+15;
++#else
++#ifdef MAGMA_ENABLE_CANARIES
++          MAGMA_LOG("%MAGMA_BUG%", MAX(e2,0) + precision > (((int)-1)&0x7fffffff) - 15 - width);
++#endif
+           szBufNeeded = MAX(e2,0)+(i64)precision+(i64)width+15;
++#endif
+           if( szBufNeeded > etBUFSIZE ){
+             bufpt = zExtra = printfTempBuf(pAccum, szBufNeeded);
+             if( bufpt==0 ) return;

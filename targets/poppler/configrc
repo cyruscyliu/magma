@@ -1,4 +1,10 @@
+TARGET_REPO="https://gitlab.freedesktop.org/poppler/poppler.git"
+
 PROGRAMS=(pdf_fuzzer pdfimages pdftoppm)
 
 pdfimages_ARGS="@@ /tmp/out"
 pdftoppm_ARGS="-mono -cropbox @@"
+# --- gen-patch harness: pdf_save_page_fuzzer ---
+PROGRAMS+=(pdf_save_page_fuzzer)
+# --- gen-patch harness: pdf_toc_fuzzer ---
+PROGRAMS+=(pdf_toc_fuzzer)

@@ -1,0 +1,6 @@
+<?php
+
+#[\Deprecated]
+enum Demo {}
+
+?>

@@ -1,19 +1,19 @@
 diff --git a/xmlstring.c b/xmlstring.c
-index 8d2e06f..5715bb0 100644
+index 5f03e07a..899e96cc 100644
 --- a/xmlstring.c
 +++ b/xmlstring.c
-@@ -457,13 +457,21 @@ xmlStrncat(xmlChar *cur, const xmlChar *add, int len) {
+@@ -465,13 +465,21 @@ xmlStrncat(xmlChar *cur, const xmlChar *add, int len) {
          return(xmlStrndup(add, len));
  
      size = xmlStrlen(cur);
 +#ifdef MAGMA_ENABLE_FIXES
-     if (size < 0)
+     if ((size < 0) || (size > INT_MAX - len))
          return(NULL);
 +#endif
-     ret = (xmlChar *) xmlRealloc(cur, (size + len + 1) * sizeof(xmlChar));
+     ret = (xmlChar *) xmlRealloc(cur, (size_t) size + len + 1);
      if (ret == NULL) {
-         xmlErrMemory(NULL, NULL);
-         return(cur);
+         xmlFree(cur);
+         return(NULL);
      }
 +#ifdef MAGMA_ENABLE_CANARIES
 +    // whenever size < 0, the previous reallocation results in allocating a
@@ -21,10 +21,10 @@ index 8d2e06f..5715bb0 100644
 +    // elements into it, which will cause a heap buffer overflow.
 +    MAGMA_LOG("%MAGMA_BUG%", size < 0);
 +#endif
-     memcpy(&ret[size], add, len * sizeof(xmlChar));
+     memcpy(&ret[size], add, len);
      ret[size + len] = 0;
      return(ret);
-@@ -488,8 +496,10 @@ xmlStrncatNew(const xmlChar *str1, const xmlChar *str2, int len) {
+@@ -496,8 +504,10 @@ xmlStrncatNew(const xmlChar *str1, const xmlChar *str2, int len) {
  
      if (len < 0) {
          len = xmlStrlen(str2);
@@ -33,25 +33,23 @@ index 8d2e06f..5715bb0 100644
              return(NULL);
 +#endif
      }
-     if ((str2 == NULL) || (len == 0))
-         return(xmlStrdup(str1));
-@@ -497,13 +507,19 @@ xmlStrncatNew(const xmlChar *str1, const xmlChar *str2, int len) {
+     if (str1 == NULL)
          return(xmlStrndup(str2, len));
+@@ -505,11 +515,17 @@ xmlStrncatNew(const xmlChar *str1, const xmlChar *str2, int len) {
+         return(xmlStrdup(str1));
  
      size = xmlStrlen(str1);
 +#ifdef MAGMA_ENABLE_FIXES
-     if (size < 0)
+     if ((size < 0) || (size > INT_MAX - len))
          return(NULL);
 +#endif
-     ret = (xmlChar *) xmlMalloc((size + len + 1) * sizeof(xmlChar));
-     if (ret == NULL) {
-         xmlErrMemory(NULL, NULL);
-         return(xmlStrndup(str1, size));
-     }
+     ret = (xmlChar *) xmlMalloc((size_t) size + len + 1);
+     if (ret == NULL)
+         return(NULL);
 +#ifdef MAGMA_ENABLE_CANARIES
 +    // ditto ;)
 +    MAGMA_LOG("%MAGMA_BUG%", MAGMA_OR(size < 0, len < 0));
 +#endif
-     memcpy(ret, str1, size * sizeof(xmlChar));
-     memcpy(&ret[size], str2, len * sizeof(xmlChar));
+     memcpy(ret, str1, size);
+     memcpy(&ret[size], str2, len);
      ret[size + len] = 0;

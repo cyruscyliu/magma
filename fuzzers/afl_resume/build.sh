@@ -12,6 +12,8 @@ if [ ! -d "$FUZZER/repo" ]; then
 fi
 
 cd "$FUZZER/repo"
+export AFL_NO_X86=1
+export AFL_TRACE_PC=1
 CC=clang make -j $(nproc)
 CC=clang make -j $(nproc) -C llvm_mode
 

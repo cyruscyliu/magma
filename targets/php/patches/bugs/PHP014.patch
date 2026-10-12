@@ -1,17 +1,14 @@
-diff --git a/ext/intl/locale/locale_methods.c b/ext/intl/locale/locale_methods.c
+diff --git a/ext/intl/locale/locale_methods.cpp b/ext/intl/locale/locale_methods.cpp
 index 0db2e70bde..53439cf1b8 100644
---- a/ext/intl/locale/locale_methods.c
-+++ b/ext/intl/locale/locale_methods.c
-@@ -504,6 +504,7 @@ static void get_icu_disp_value_src_php( char* tag_name, INTERNAL_FUNCTION_PARAME
- 		RETURN_THROWS();
- 	}
- 
+--- a/ext/intl/locale/locale_methods.cpp
++++ b/ext/intl/locale/locale_methods.cpp
+@@ -574,9 +574,15 @@ static void get_icu_disp_value_src_php( const char* tag_name, INTERNAL_FUNCTION_
+ 	ZEND_PARSE_PARAMETERS_END();
+
 +#ifdef MAGMA_ENABLE_FIXES
  	if(loc_name_len > ULOC_FULLNAME_CAPACITY) {
  		/* See bug 67397: overlong locale names cause trouble in uloc_getDisplayName */
- 		spprintf(&msg , 0, "locale_get_display_%s : name too long", tag_name );
-@@ -511,6 +512,11 @@ static void get_icu_disp_value_src_php( char* tag_name, INTERNAL_FUNCTION_PARAME
- 		efree(msg);
+ 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,  "name too long");
  		RETURN_FALSE;
  	}
 +#else
@@ -19,6 +16,5 @@ index 0db2e70bde..53439cf1b8 100644
 +		MAGMA_LOG("%MAGMA_BUG%",loc_name_len > ULOC_FULLNAME_CAPACITY);
 +	#endif
 +#endif
- 
+
  	if(loc_name_len == 0) {
- 		loc_name = intl_locale_get_default();

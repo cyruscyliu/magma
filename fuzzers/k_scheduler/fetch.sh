@@ -8,12 +8,17 @@ set -e
 
 export PATH="/usr/local/go/bin:$PATH"
 export GOPATH="$FUZZER/repo/go"
+# Currently points to latest HEAD (no 2026 commits; repo last active before 2026)
+KSCHEDULER_STABLE_HASH=6e78fbeb336d831949883dfd2473dffa98e1f8a1
 
 mkdir -p $GOPATH
 go install github.com/SRI-CSL/gllvm/cmd/...@latest
 
+rm -rf "$FUZZER/repo/kscheduler"
+rm -f "$FUZZER/repo/.git"
 git clone --no-checkout https://github.com/Dongdongshe/K-Scheduler "$FUZZER/repo/kscheduler"
-git -C "$FUZZER/repo/kscheduler" checkout 36bc5aa658fa7c9716aee08a8ff22419f28e3fe9
+printf 'gitdir: kscheduler/.git\n' > "$FUZZER/repo/.git"
+git -C "$FUZZER/repo/kscheduler" checkout "$KSCHEDULER_STABLE_HASH"
 
 sed -i '{s/^int main/__attribute__((weak)) &/}' \
     "$FUZZER/repo/kscheduler/libfuzzer_integration/llvm_11.0.1/compiler-rt/lib/fuzzer/afl/afl_driver.cpp"

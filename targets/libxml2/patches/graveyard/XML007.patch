@@ -1,0 +1,52 @@
+# Codebase versions used for the following explaination:
+# 1. Old code: htmlParseTryOrFinish() in HTMLparser.c, xmlHaltParser() in parser.c
+# (commit: ec6e3efb06d7b15cf5a2328fabd3845acea4c815)
+# 2. New code: htmlParseTryOrFinish() in HTMLparser.c, xmlHaltParser() in parserInternals.c
+# (commit: 41c10c0cec2ac072897c7d8df0e87fdf4b715586)
+
+# In the earlier HTML parser, xmlHaltParser() itself freed the input stream. So removing that if in 
+# just this function was enough to introduce the dangling-pointer bug in exactly one place.
+
+# In the new parser:
+#     1. All buffer freeing is moved into the generic destructor xmlFreeInputStream(), which is called 
+# 	when an input stream is popped or the parser context is torn down, not in haltParser.
+#     2. xmlHaltParser() just sets instate=EOF and disableSAX and htmlParseTryOrFinish() never calls 
+# 	xmlFreeInputStream() directly.
+#     3. Therefore, there is no code path where we can skip the free and introduce the bug in a specific way. 
+# 	We could skip the free in xmlFreeInputStream() but this will affect every parser and entity pop.
+# Because buffer freeing happens in a shared teardown routine outside of the haltParser, we cannot 
+# reintroduce the old bug in a contained way.
+
+# Therefore it is not possible to re-introduce this bug due to complex structural changes.
+
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -5392,6 +5392,9 @@ htmlParseTryOrFinish(htmlParserCtxtPtr ctxt, int terminate) {
+ 	    avail = in->length - (in->cur - in->base);
+ 	else
+ 	    avail = (ptrdiff_t)xmlBufUse(in->buf->buffer) -
+                     (in->cur - in->base);
++#ifdef MAGMA_ENABLE_CANARIES
++    MAGMA_LOG("%MAGMA_BUG%", avail != (in->end - in->cur));
++#endif
+ 	if ((avail == 0) && (terminate)) {
+ 	    htmlAutoCloseOnEnd(ctxt);
+ 	    if ((ctxt->nameNr == 0) && (ctxt->instate != XML_PARSER_EOF)) {
+--- a/parser.c
++++ b/parser.c
+@@ -12491,12 +12491,14 @@ xmlHaltParser(xmlParserCtxtPtr ctxt) {
+ 	    ctxt->input->free((xmlChar *) ctxt->input->base);
+ 	    ctxt->input->free = NULL;
+ 	}
++#ifdef MAGMA_ENABLE_FIXES
+         if (ctxt->input->buf != NULL) {
+             xmlFreeParserInputBuffer(ctxt->input->buf);
+             ctxt->input->buf = NULL;
+         }
+-	ctxt->input->cur = BAD_CAST"";
+         ctxt->input->length = 0;
++#endif
++	ctxt->input->cur = BAD_CAST"";
+ 	ctxt->input->base = ctxt->input->cur;
+         ctxt->input->end = ctxt->input->cur;
+     }

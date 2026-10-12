@@ -1,0 +1,19 @@
+<?php
+
+try {
+    false |> assert(...);
+} catch (\AssertionError $e) {
+    echo $e::class, ": '", $e->getMessage(), "'\n";
+}
+try {
+    0 |> "assert"(...);
+} catch (\AssertionError $e) {
+    echo $e::class, ": '", $e->getMessage(), "'\n";
+}
+try {
+    false |> ("a"."ssert")(...);
+} catch (\AssertionError $e) {
+    echo $e::class, ": '", $e->getMessage(), "'\n";
+}
+
+?>

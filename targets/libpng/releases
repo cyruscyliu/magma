@@ -1,0 +1,2 @@
+libpng_PIONEER="https://github.com/pnggroup/libpng.git"
+libpng_PIONEER_STABLE_COMMIT="9e4e247afbe809bac24bf70f531b23427e3f20ec"

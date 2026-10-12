@@ -1,31 +1,34 @@
 diff --git a/libtiff/tif_next.c b/libtiff/tif_next.c
-index 0ba61ae..ba8b3cc 100644
+index f000574e..34cf0782 100644
 --- a/libtiff/tif_next.c
 +++ b/libtiff/tif_next.c
-@@ -122,15 +122,26 @@ NeXTDecode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
- 				 * bounds, potentially resulting in a security
- 				 * issue.
- 				 */
+@@ -137,11 +137,21 @@ static int NeXTDecode(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
+                      * bounds, potentially resulting in a security
+                      * issue.
+                      */
 +#ifdef MAGMA_ENABLE_FIXES
- 				while (n-- > 0 && npixels < imagewidth && op_offset < scanline)
+                     while (n-- > 0 && npixels < imagewidth &&
+                            op_offset < scanline)
 +#else
-+                while (n-- > 0 && npixels < imagewidth)
++                    while (n-- > 0 && npixels < imagewidth)
 +#endif
-+                {
++                    {
 +#ifdef MAGMA_ENABLE_CANARIES
 +                    MAGMA_LOG("%MAGMA_BUG%", op_offset >= scanline);
 +#endif
- 					SETPIXEL(op, grey);
-+                }
- 				if (npixels >= imagewidth)
- 					break;
+                         SETPIXEL(op, grey);
++                    }
+                     if (npixels >= imagewidth)
+                         break;
 +#ifdef MAGMA_ENABLE_FIXES
-                 if (op_offset >= scanline ) {
-                     TIFFErrorExt(tif->tif_clientdata, module, "Invalid data for scanline %"PRIu32,
-                         tif->tif_row);
-                     return (0);
-                 }
+                     if (op_offset >= scanline)
+                     {
+                         TIFFErrorExtR(tif, module,
+@@ -149,6 +159,7 @@ static int NeXTDecode(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
+                                       tif->tif_row);
+                         return (0);
+                     }
 +#endif
- 				if (cc == 0)
- 					goto bad;
- 				n = *bp++;
+                     if (cc == 0)
+                         goto bad;
+                     n = *bp++;

@@ -1,10 +1,10 @@
 diff --git a/fofi/FoFiTrueType.cc b/fofi/FoFiTrueType.cc
-index 24624352..6a48384b 100644
+index c6cb8233..59647e4a 100644
 --- a/fofi/FoFiTrueType.cc
 +++ b/fofi/FoFiTrueType.cc
-@@ -1227,16 +1227,28 @@ void FoFiTrueType::cvtSfnts(FoFiOutputFunc outputFunc,
+@@ -1373,15 +1373,27 @@ void FoFiTrueType::cvtSfnts(FoFiOutputFunc outputFunc, void *outputStream, const
                  if ((j = seekTable(t42Tables[i].tag)) >= 0 && checkRegion(tables[j].offset, tables[j].len)) {
-                     dumpString(file + tables[j].offset, tables[j].len, outputFunc, outputStream);
+                     dumpString(std::span(file + tables[j].offset, tables[j].len), outputFunc, outputStream);
                  } else if (needVerticalMetrics && i == t42VheaTable) {
 +#ifdef MAGMA_ENABLE_FIXES
                      if (unlikely(length > (int)sizeof(vheaTab))) {
@@ -16,18 +16,17 @@ index 24624352..6a48384b 100644
 +                    MAGMA_LOG("%MAGMA_BUG%", length > (int)sizeof(vheaTab));
 +#endif
 +#endif
-                     dumpString(vheaTab, length, outputFunc, outputStream);
+                     dumpString(vheaTab, outputFunc, outputStream);
                  } else if (needVerticalMetrics && i == t42VmtxTable) {
 +#ifdef MAGMA_ENABLE_FIXES
-                     if (unlikely(length > vmtxTabLength)) {
+                     if (unlikely(length > (int)vmtxTab.size())) {
                          error(errSyntaxWarning, -1, "length bigger than vmtxTab size");
-                         length = vmtxTabLength;
                      }
 +#else
 +#ifdef MAGMA_ENABLE_CANARIES
-+                    MAGMA_LOG("%MAGMA_BUG%", length > vmtxTabLength);
++                    MAGMA_LOG("%MAGMA_BUG%", length > (int)vmtxTab.size());
 +#endif
 +#endif
-                     dumpString(vmtxTab, length, outputFunc, outputStream);
+                     dumpString(vmtxTab, outputFunc, outputStream);
                  }
              }

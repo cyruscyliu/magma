@@ -30,10 +30,15 @@ export CFLAGS="$CFLAGS -DSQLITE_MAX_LENGTH=128000000 \
 
 "$TARGET/repo"/configure --disable-shared --enable-rtree
 make clean
-make -j$(nproc)
+make -j$(nproc) LDFLAGS.configure="$LIBS $LDFLAGS"
 make sqlite3.c
 
 $CC $CFLAGS -I. \
     "$TARGET/repo/test/ossfuzz.c" "./sqlite3.o" \
     -o "$OUT/sqlite3_fuzz" \
+    $LDFLAGS $LIBS $LIB_FUZZING_ENGINE -pthread -ldl -lm
+# --- gen-patch harness: sqlite3_lookaside_fuzz ---
+$CC $CFLAGS -I. \
+    "$TARGET/src/sqlite3_lookaside_fuzz.c" "./sqlite3.o" \
+    -o "$OUT/sqlite3_lookaside_fuzz" \
     $LDFLAGS $LIBS $LIB_FUZZING_ENGINE -pthread -ldl -lm

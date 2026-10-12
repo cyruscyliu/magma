@@ -2,7 +2,7 @@ diff --git a/ext/phar/util.c b/ext/phar/util.c
 index 53982b0f85..296a8767e5 100644
 --- a/ext/phar/util.c
 +++ b/ext/phar/util.c
-@@ -1599,13 +1599,18 @@ int phar_verify_signature(php_stream *fp, size_t end_of_phar, uint32_t sig_type,
+@@ -1622,13 +1622,18 @@ zend_result phar_verify_signature(php_stream *fp, size_t end_of_phar, uint32_t s
  		case PHAR_SIG_SHA512: {
  			unsigned char digest[64];
  			PHP_SHA512_CTX context;
@@ -10,7 +10,7 @@ index 53982b0f85..296a8767e5 100644
 +		#ifdef MAGMA_ENABLE_FIXES
  			if (sig_len < sizeof(digest)) {
  				if (error) {
- 					spprintf(error, 0, "broken signature");
+ 					*error = estrdup("broken openssl signature");
  				}
  				return FAILURE;
  			}
@@ -19,10 +19,10 @@ index 53982b0f85..296a8767e5 100644
 +				MAGMA_LOG("%MAGMA_BUG%",sig_len < sizeof(digest));
 +			#endif
 +		#endif
- 
+
  			PHP_SHA512Init(&context);
  			read_len = end_of_phar;
-@@ -1639,13 +1644,18 @@ int phar_verify_signature(php_stream *fp, size_t end_of_phar, uint32_t sig_type,
+@@ -1662,13 +1667,18 @@ zend_result phar_verify_signature(php_stream *fp, size_t end_of_phar, uint32_t s
  		case PHAR_SIG_SHA256: {
  			unsigned char digest[32];
  			PHP_SHA256_CTX context;
@@ -30,19 +30,19 @@ index 53982b0f85..296a8767e5 100644
 +		#ifdef MAGMA_ENABLE_FIXES
  			if (sig_len < sizeof(digest)) {
  				if (error) {
- 					spprintf(error, 0, "broken signature");
+ 					*error = estrdup("broken openssl signature");
  				}
  				return FAILURE;
  			}
-+			#else
++		#else
 +			#ifdef MAGMA_ENABLE_CANARIES
 +				MAGMA_LOG("%MAGMA_BUG%",sig_len < sizeof(digest));
 +			#endif
 +		#endif
- 
+
  			PHP_SHA256Init(&context);
  			read_len = end_of_phar;
-@@ -1679,13 +1689,19 @@ int phar_verify_signature(php_stream *fp, size_t end_of_phar, uint32_t sig_type,
+@@ -1702,13 +1712,19 @@ zend_result phar_verify_signature(php_stream *fp, size_t end_of_phar, uint32_t s
  		case PHAR_SIG_SHA1: {
  			unsigned char digest[20];
  			PHP_SHA1_CTX  context;
@@ -50,20 +50,20 @@ index 53982b0f85..296a8767e5 100644
 +		#ifdef MAGMA_ENABLE_FIXES
  			if (sig_len < sizeof(digest)) {
  				if (error) {
- 					spprintf(error, 0, "broken signature");
+ 					*error = estrdup("broken signature");
  				}
  				return FAILURE;
  			}
-+			#else
++		#else
 +			#ifdef MAGMA_ENABLE_CANARIES
 +				MAGMA_LOG("%MAGMA_BUG%",sig_len < sizeof(digest));
 +			#endif
 +		#endif
 +
- 
+
  			PHP_SHA1Init(&context);
  			read_len = end_of_phar;
-@@ -1719,13 +1735,19 @@ int phar_verify_signature(php_stream *fp, size_t end_of_phar, uint32_t sig_type,
+@@ -1742,13 +1758,19 @@ zend_result phar_verify_signature(php_stream *fp, size_t end_of_phar, uint32_t s
  		case PHAR_SIG_MD5: {
  			unsigned char digest[16];
  			PHP_MD5_CTX   context;
@@ -71,17 +71,17 @@ index 53982b0f85..296a8767e5 100644
 +		#ifdef  MAGMA_ENABLE_FIXES
  			if (sig_len < sizeof(digest)) {
  				if (error) {
- 					spprintf(error, 0, "broken signature");
+ 					*error = estrdup("broken signature");
  				}
  				return FAILURE;
  			}
-+			#else
++		#else
 +			#ifdef MAGMA_ENABLE_CANARIES
 +				MAGMA_LOG("%MAGMA_BUG%",sig_len < sizeof(digest));
 +			#endif
 +		#endif
 +
- 
+
  			PHP_MD5Init(&context);
  			read_len = end_of_phar;
 diff --git a/ext/phar/zip.c b/ext/phar/zip.c

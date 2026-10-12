@@ -1,0 +1,7 @@
+<?php
+
+readonly interface Foo
+{
+}
+
+?>

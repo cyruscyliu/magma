@@ -1,9 +1,9 @@
 --- a/crypto/asn1/a_int.c
 +++ b/crypto/asn1/a_int.c
-@@ -133,7 +133,50 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
+@@ -139,7 +139,50 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
      *p = pb;
-     p += pad;       /* yes, p[0] can be written twice, but it's little
-                      * price to pay for eliminated branches */
+     p += pad; /* yes, p[0] can be written twice, but it's little
+                * price to pay for eliminated branches */
 +#ifdef MAGMA_ENABLE_FIXES
      twos_complement(p, b, blen, pb);
 +#else
@@ -16,7 +16,7 @@
 +        const unsigned char *n = b + blen - 1;
 +        p += blen - 1;
 +        i = blen;
-+
++ 
 +        /**
 +         * The representation of a negative zero is just all zeros. This routine
 +         * tries to optimize 2's complement by skipping all trailing zeros,
@@ -24,7 +24,7 @@
 +         * negative zero number is all trailing zeros. Thus, the routine will
 +         * underflow trying to skip them.
 +         */
-+
++ 
 +        /* Copy zeros to destination as long as source is zero */
 +        while (!*n) {
 +            *(p--) = 0;

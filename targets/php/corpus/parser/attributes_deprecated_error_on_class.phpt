@@ -1,0 +1,6 @@
+<?php
+
+#[\Deprecated]
+class Demo {}
+
+?>

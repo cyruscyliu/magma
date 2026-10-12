@@ -18,6 +18,8 @@ ORIG_LIBS=$LIBS
 export PATH="/usr/local/go/bin:$PATH"
 export GOPATH="$FUZZER/repo/go"
 export PATH="$GOPATH/bin:$PATH"
+export CC="gclang"
+export CXX="gclang++"
 
 (
   export CFLAGS="$ORIG_CFLAGS -O2 -fsanitize-coverage=trace-pc-guard,no-prune -fno-omit-frame-pointer -gline-tables-only -fsanitize=fuzzer-no-link"
@@ -43,7 +45,7 @@ export PATH="$GOPATH/bin:$PATH"
     get-bc -o "$P.bc" "$OUT/$P"
     llvm-dis "$P.bc"
     python3 "$FUZZER/repo/kscheduler/afl_integration/build_example/fix_long_fun_name.py" "$P.ll"
-    opt-11 -dot-cfg "${P}_fix.ll"
+    opt-14 -dot-cfg "${P}_fix.ll"
 
     mkdir -p cfgs
     for f in $(ls -a | grep '^\.*' | grep dot); do mv $f "cfgs/${f:1}"; done

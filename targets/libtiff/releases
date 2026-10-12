@@ -1,0 +1,2 @@
+libtiff_PIONEER="https://gitlab.com/libtiff/libtiff.git"
+libtiff_PIONEER_STABLE_COMMIT="65a694aa02544675250380f01bfc577524a1a14f"

@@ -38,18 +38,15 @@ index 8606bdd926..7c4e35d12a 100644
  				exif_process_SOFn(data+pos, marker, &sof_info);
  				ImageInfo->Thumbnail.height   = sof_info.height;
  				ImageInfo->Thumbnail.width    = sof_info.width;
-@@ -4703,9 +4719,14 @@ PHP_FUNCTION(exif_thumbnail)
- 	ZVAL_STRINGL(return_value, ImageInfo.Thumbnail.data, ImageInfo.Thumbnail.size);
- 	if (arg_c >= 3) {
- 		if (!ImageInfo.Thumbnail.width || !ImageInfo.Thumbnail.height) {
-+
-+		#ifdef MAGMA_ENABLE_FIXES
- 			if (!exif_scan_thumbnail(&ImageInfo)) {
- 				ImageInfo.Thumbnail.width = ImageInfo.Thumbnail.height = 0;
- 			}
-+		#else
-+			exif_scan_thumbnail(&ImageInfo);
-+		#endif
+@@ -4996,7 +5011,11 @@ PHP_FUNCTION(exif_thumbnail)
+ 	RETVAL_STRINGL(ImageInfo.Thumbnail.data, ImageInfo.Thumbnail.size);
+ 	if ((z_width || z_height) && (!ImageInfo.Thumbnail.width || !ImageInfo.Thumbnail.height)) {
++	#ifdef MAGMA_ENABLE_FIXES
+ 		if (!exif_scan_thumbnail(&ImageInfo)) {
+ 			ImageInfo.Thumbnail.width = ImageInfo.Thumbnail.height = 0;
  		}
- 		ZEND_TRY_ASSIGN_REF_LONG(z_width,  ImageInfo.Thumbnail.width);
- 		ZEND_TRY_ASSIGN_REF_LONG(z_height, ImageInfo.Thumbnail.height);
++	#else
++		exif_scan_thumbnail(&ImageInfo);
++	#endif
+ 	}
+ 	if (z_width) {

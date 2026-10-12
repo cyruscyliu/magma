@@ -1,0 +1,2 @@
+openssl_PIONEER="https://github.com/openssl/openssl.git"
+openssl_PIONEER_STABLE_COMMIT="61c876198d6f48f146098c5b50ce110ff2b10e7e"

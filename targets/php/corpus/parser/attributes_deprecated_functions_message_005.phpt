@@ -1,0 +1,17 @@
+<?php
+
+class P {
+	protected const DEPRECATION_MESSAGE = 'from class constant';
+}
+
+class Clazz extends P {
+	#[\Deprecated(parent::DEPRECATION_MESSAGE)]
+	public function test() {
+
+	}
+}
+
+$c = new Clazz();
+$c->test();
+
+?>

@@ -1,0 +1,39 @@
+# Codebase versions used for the following explaination:
+# 1. Old code: htmlParseName() in HTMLparser.c (commit: ec6e3efb06d7b15cf5a2328fabd3845acea4c815)
+# 2. New code: htmlParseData() in HTMLparser.c (commit: 41c10c0cec2ac072897c7d8df0e87fdf4b715586)
+
+# In the old code there was a two-phase "fast ASCII name" logic  in htmlParseName which scanned forward 
+# over purely ASCII name characters up until either:
+#     a. It hit a non-name character (success), or
+#     b. It hit the very end of the in-memory buffer (in == end) (bail out, return NULL),
+# and only if it bailed out did the parser refill the buffer and fall back to the slower, complex path.
+# Because that fast path was a standalone function, re-introducing its exact "if you hit the buffer end, 
+# just return NULL” behavior could be done by dropping the if (in == end) return NULL; in htmlParseName.
+
+# In the new code there is no separate htmlParseName fast path. Every piece of HTML text is handled by 
+# the one big htmlParseData loop. Which never does a simple return NULL when it reaches input->end; 
+# instead it watches the avail = end - cur count and, before it ever risks running off the end, calls 
+# xmlParserGrow() to refill the buffer and then resumes scanning. Because name-character checking is just one
+# branch inside a giant, mask-driven state machine, there is no isolated place where "we are in a name scan and 
+# we hit buffer end-return NULL" can be injected without turning the unified loop back into a two-phase design.
+
+# Therefore, it is not possible to re-introduce this bug without ressurecting old code. 
+
+diff --git a/HTMLparser.c b/HTMLparser.c
+index d6971b5..7c82c11 100644
+--- a/HTMLparser.c
++++ b/HTMLparser.c
+@@ -2473,8 +2473,13 @@ htmlParseName(htmlParserCtxtPtr ctxt) {
+ 	       (*in == ':') || (*in == '.'))
+ 	    in++;
+ 
++#ifdef MAGMA_ENABLE_FIXES
+ 	if (in == ctxt->input->end)
+ 	    return(NULL);
++#endif
++#ifdef MAGMA_ENABLE_CANARIES
++	MAGMA_LOG("%MAGMA_BUG%", in >= ctxt->input->end);
++#endif
+ 
+ 	if ((*in > 0) && (*in < 0x80)) {
+ 	    count = in - ctxt->input->cur;

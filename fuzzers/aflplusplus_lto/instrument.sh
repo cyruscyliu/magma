@@ -12,7 +12,7 @@ set -e
 
 export CC="$FUZZER/repo/afl-clang-lto"
 export CXX="$FUZZER/repo/afl-clang-lto++"
-LLVM_PATH=/usr/lib/llvm-11/bin
+LLVM_PATH=/usr/lib/llvm-16/bin
 export AS="${LLVM_PATH}/llvm-as"
 export RANLIB="${LLVM_PATH}/llvm-ranlib"
 export AR="${LLVM_PATH}/llvm-ar"

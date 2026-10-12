@@ -1,0 +1,2 @@
+libxml2_PIONEER="https://gitlab.gnome.org/GNOME/libxml2.git"
+libxml2_PIONEER_STABLE_COMMIT="eae9291aa73907694dd3a4274d306e31217e746e"
