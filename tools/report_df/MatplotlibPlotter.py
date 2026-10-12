@@ -96,7 +96,12 @@ def unique_bugs_per_target(bd, outdir, metric, libraries=None, symmetric=False, 
     nrows = (len(libraries) - 1) // ncols + 1
     fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(12, 12), squeeze=False)
 
+    plottable = set(p_values.index.get_level_values('Target'))
     for target, ax in zip(libraries, axs.flat):
+        if target not in plottable:
+            ax.set_title(f"{target} (no data)")
+            ax.axis('off')
+            continue
         lib_data = p_values.xs(target, level='Target', drop_level=True)
         # maintain symmetry by removing "extra" fuzzers
         lib_data = lib_data.transpose().reindex(lib_data.index)
