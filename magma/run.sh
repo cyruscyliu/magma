@@ -37,7 +37,7 @@ for seed in "$TARGET/corpus/$PROGRAM"/*; do
 done
 
 shopt -s nullglob
-seeds=("$1"/*)
+seeds=("$TARGET/corpus/$PROGRAM"/*)
 shopt -u nullglob
 if [ ${#seeds[@]} -eq 0 ]; then
     echo "No seeds remaining! Campaign will not be launched."
@@ -73,6 +73,7 @@ echo "Campaign launched at $(date '+%F %R')"
 
 timeout $TIMEOUT "$FUZZER/run.sh" | \
     multilog n2 s$LOGSIZE "$SHARED/log"
+pipeline_status=("${PIPESTATUS[@]}")
 
 chmod o+rx $SHARED/log
 if [ -f "$SHARED/log/current" ]; then
@@ -84,5 +85,15 @@ echo "Campaign terminated at $(date '+%F %R')"
 kill $(jobs -p)
 
 if [ ! -z $SOURCE_COVERAGE ]; then
-    $MAGMA/coverage.sh
+    "$MAGMA/coverage.sh" || exit $?
 fi
+
+# A campaign reaching its requested duration is successful. Preserve actual
+# fuzzer/logging failures so noninteractive callers can detect a failed run.
+if [ "${pipeline_status[1]}" -ne 0 ]; then
+    exit "${pipeline_status[1]}"
+fi
+if [ "${pipeline_status[0]}" -eq 124 ]; then
+    exit 0
+fi
+exit "${pipeline_status[0]}"
