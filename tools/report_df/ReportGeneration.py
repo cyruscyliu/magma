@@ -112,5 +112,9 @@ def generate_report(bd, outdir, report_title="Report", **kwargs):
     print(f"Generated markdown pages at path '{outdir}'.\n\n")
 
     with open(os.path.join(outdir, 'cov', 'coverage.md'), 'w') as f:
-        cov_data = get_md_report_data()
+        try:
+            cov_data = get_md_report_data()
+        except Exception as e:
+            print(f"Skipping coverage page: no coverage data found ({e}).")
+            cov_data = {}
         f.write(generate_coverage_page(base_template, env, cov_data=cov_data))

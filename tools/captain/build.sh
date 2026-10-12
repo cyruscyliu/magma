@@ -17,7 +17,7 @@ if [ -z $FUZZER ] || [ -z $TARGET ]; then
     exit 1
 fi
 TARGET_VERSION=${TARGET_VERSION:-PIONEER}
-IMG_NAME="magma/$FUZZER/$TARGET"
+IMG_NAME="${IMAGE_PREFIX:-magma}/$FUZZER/$TARGET"
 MAGMA=${MAGMA:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" >/dev/null 2>&1 \
     && pwd)"}
 source "$MAGMA/tools/captain/common.sh"

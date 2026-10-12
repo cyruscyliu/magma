@@ -389,3 +389,84 @@ def test_expected_bug_requires_canaries(docker, tmp_path):
     assert result.returncode == 1
     assert "canaries" in data["error"]
     assert not any(c[0] == "run" for c in calls(docker))
+
+
+@pytest.fixture
+def captain_workdir(tmp_path):
+    """A minimal Captain workdir: one campaign tarball with monitor samples."""
+    workdir = tmp_path / "workdir"
+    campaign = workdir / "ar" / "aflplusplus" / "libpng" / "libpng_read_fuzzer" / "0"
+    campaign.mkdir(parents=True)
+    monitor = tmp_path / "monitor"
+    monitor.mkdir()
+    (monitor / "0").write_text("PNG001_R,PNG001_T\n0,0\n")
+    (monitor / "5").write_text("PNG001_R,PNG001_T\n3,1\n")
+    subprocess.run(
+        ["tar", "-cf", str(campaign / "ball.tar"), "-C", str(tmp_path), "monitor"],
+        check=True,
+    )
+    return workdir
+
+
+def run_cli(argv, **kwargs):
+    return subprocess.run(
+        [sys.executable, str(CLI), *argv],
+        cwd=ROOT,
+        capture_output=True,
+        check=False,
+        text=True,
+        **kwargs,
+    )
+
+
+def test_report_requires_captain_workdir(tmp_path):
+    empty = tmp_path / "not-a-workdir"
+    empty.mkdir()
+    result = run_cli(["report", "--workdir", str(empty)], timeout=60)
+    data = json.loads(result.stdout)
+    assert result.returncode == 2
+    assert data["status"] == "error" and "ar/" in data["error"]
+
+
+def test_report_refuses_existing_output(captain_workdir, tmp_path):
+    output = tmp_path / "report"
+    output.mkdir()
+    (output / "occupied").write_text("x")
+    result = run_cli(
+        ["report", "--workdir", str(captain_workdir), "--output", str(output)],
+        timeout=60,
+    )
+    data = json.loads(result.stdout)
+    assert result.returncode == 2
+    assert data["status"] == "error" and "new or empty" in data["error"]
+
+
+def test_report_generates_pages_and_html(captain_workdir, tmp_path):
+    output = tmp_path / "report"
+    result = run_cli(
+        [
+            "report",
+            "--workdir",
+            str(captain_workdir),
+            "--output",
+            str(output),
+            "--trials",
+            "1",
+            "--duration",
+            "5s",
+        ],
+        timeout=600,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    data = json.loads(result.stdout)
+    assert data["status"] == "completed" and data["trials"] == 1
+    pages = {Path(page).name for page in data["pages"]}
+    assert {"index.html", "aflplusplus.html", "libpng.html", "coverage.html"} <= pages
+    index = (output / "index.html").read_text()
+    assert "{% raw %}" not in index
+    assert "css/report.css" in index and "<!DOCTYPE html>" in index
+    assert (output / "css" / "report.css").is_file()
+    summary = json.loads((output / "bench.json").read_text())
+    assert summary["results"]["aflplusplus"]["libpng"]["libpng_read_fuzzer"]["0"][
+        "triggered"
+    ] == {"PNG001": 5}

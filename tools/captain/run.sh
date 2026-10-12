@@ -129,8 +129,10 @@ start_campaign()
         fi
 
         echo_time "Container $FUZZER/$TARGET/$PROGRAM/$ARCID started on CPU $AFFINITY"
-        "$MAGMA"/tools/captain/start.sh &> \
-            "${LOGDIR}/${FUZZER}_${TARGET}_${PROGRAM}_${ARCID}_container.log"
+        campaign_status=0
+        timeout "${CAMPAIGN_TIMEOUT:-7d}" "$MAGMA"/tools/captain/start.sh &> \
+            "${LOGDIR}/${FUZZER}_${TARGET}_${PROGRAM}_${ARCID}_container.log" || campaign_status=$?
+        echo "$campaign_status" > "${LOGDIR}/${FUZZER}_${TARGET}_${PROGRAM}_${ARCID}_exitcode"
         echo_time "Container $FUZZER/$TARGET/$PROGRAM/$ARCID stopped"
 
         if [ ! -z $POC_EXTRACT ]; then
@@ -279,10 +281,13 @@ for FUZZER in "${FUZZERS[@]}"; do
         export FUZZARGS="$(get_var_or_default $FUZZER $TARGET 'FUZZARGS')"
 
         # build the Docker image
-        IMG_NAME="magma/$FUZZER/$TARGET"
+        IMG_NAME="${IMAGE_PREFIX:-magma}/$FUZZER/$TARGET"
         echo_time "Building $IMG_NAME"
-        if ! "$MAGMA"/tools/captain/build.sh &> \
-            "${LOGDIR}/${FUZZER}_${TARGET}_build.log"; then
+        build_status=0
+        timeout "${BUILD_TIMEOUT:-7d}" "$MAGMA"/tools/captain/build.sh &> \
+            "${LOGDIR}/${FUZZER}_${TARGET}_build.log" || build_status=$?
+        echo "$build_status" > "${LOGDIR}/${FUZZER}_${TARGET}_build_exitcode"
+        if [ "$build_status" -ne 0 ]; then
             echo_time "Failed to build $IMG_NAME. Check build log for info."
             continue
         fi

@@ -25,8 +25,10 @@ def parse_args():
         )
     parser.add_argument('-t', '--trials', type=int, default=10,
         help="Number of trials to consider in the analysis. Default: 10")
-    parser.add_argument('-d', '--duration', type=int, default=7,
+    parser.add_argument('-d', '--duration', type=float, default=7,
         help="Duration in days for the benchmark analysis. Default: 7")
+    parser.add_argument('--title', default='Report',
+        help="Title of the generated report. Default: Report")
     return parser.parse_args()
 
 def configure_verbosity(level):
@@ -47,7 +49,7 @@ def main():
     bd = BenchmarkData(args.json, config={'duration': duration_seconds, 'trials': args.trials})
     
     # Generate main reports
-    generate_report(bd, args.outdir)
+    generate_report(bd, args.outdir, report_title=args.title)
 
 if __name__ == '__main__':
     main()

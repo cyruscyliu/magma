@@ -1,0 +1,33 @@
+# Full-matrix smoke configuration: every fuzzer in this checkout against every
+# target for one 60-second campaign. Sourced by tools/captain/run.sh, typically
+# through `./magma-cli run --config tools/captain/captainrc.fullmatrix`.
+
+# WORKDIR: path to directory where archives, cache, logs and PoCs are stored
+WORKDIR=./workdir/fullmatrix-60s
+
+# REPEAT: number of campaigns to run per program (per fuzzer)
+REPEAT=1
+
+# CAMPAIGN_WORKERS: number of workers to allocate for a campaign (default: 1)
+CAMPAIGN_WORKERS=1
+
+# TIMEOUT: time to run each campaign (s: seconds, m: minutes, h: hours, d: days)
+TIMEOUT=60s
+
+# POLL: time (in seconds) between monitor polls
+POLL=5
+
+# CACHE_ON_DISK: keep the cache workdir on disk (tmpfs requires sudo)
+CACHE_ON_DISK=1
+
+# IMAGE_PREFIX: isolate image names so concurrent Captain runs cannot collide
+IMAGE_PREFIX=magma-v14
+
+# CANARY_MODE: 1 = without fixes, with canaries (standard benchmarking)
+CANARY_MODE=1
+
+# TARGET_VERSION: target version to be chosen from its releases file
+TARGET_VERSION=PIONEER
+
+# FUZZERS: every fuzzer in this checkout (archived fuzzers excluded)
+FUZZERS=(afl afl_asan afl_resume aflfast aflplusplus aflplusplus_lto aflplusplus_lto_asan ddfuzz eclipser entropic fairfuzz honggfuzz honggfuzz_asan instrim k_scheduler klee libfuzzer llvm_analysis llvm_cov moptafl moptafl_asan parmesan vanilla)

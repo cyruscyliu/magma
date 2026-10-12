@@ -40,7 +40,7 @@ MAGMA=${MAGMA:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" >/dev/null 2>&1 \
 export MAGMA
 source "$MAGMA/tools/captain/common.sh"
 
-IMG_NAME="magma/$FUZZER/$TARGET"
+IMG_NAME="${IMAGE_PREFIX:-magma}/$FUZZER/$TARGET"
 DEBUG_MODE=${DEBUG_MODE:-$MAGMA_DEBUG}
 
 if [ ! -z $AFFINITY ]; then
