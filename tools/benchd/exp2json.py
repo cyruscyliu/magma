@@ -6,6 +6,7 @@ import csv
 import errno
 import json
 import logging
+import multiprocessing
 from multiprocessing import Pool
 import os
 import shutil
@@ -169,7 +170,7 @@ def collect_experiment_data(workdir, workers):
     tmpdir = os.path.join(workdir, "tmp")
     ensure_dir(tmpdir)
 
-    with Pool(processes=workers, initializer=init, initargs=(tmpdir,)) as pool:
+    with multiprocessing.get_context("fork").Pool(processes=workers, initializer=init, initargs=(tmpdir,)) as pool:
         results = pool.starmap(process_one_campaign,
             ((path,) for path in find_campaigns(workdir))
         )

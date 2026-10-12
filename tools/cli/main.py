@@ -82,8 +82,8 @@ def parser():
                 "replay": "Replay files through the Magma bug oracle",
             }[name],
         )
-        c.add_argument("--fuzzer", required=True)
-        c.add_argument("--target", required=True)
+        c.add_argument("--fuzzer", required=name != "run")
+        c.add_argument("--target", required=name != "run")
         c.add_argument(
             "--target-version",
             default="default",
@@ -110,16 +110,20 @@ def parser():
             c.add_argument("--source-coverage", action="store_true")
             c.add_argument("--no-cache", action="store_true")
         else:
-            c.add_argument("--program", required=True)
+            c.add_argument("--program", required=name != "run")
             c.add_argument(
                 "--args",
                 help="Program arguments; defaults to target configrc. Use --args='-x @@' for flags",
             )
             if name == "run":
                 c.add_argument(
+                    "--config",
+                    type=Path,
+                    help="Run a Captain configuration using tools/captain/run.sh",
+                )
+                c.add_argument(
                     "--workdir",
                     type=Path,
-                    required=True,
                     help="New or empty directory for findings, monitor samples and logs",
                 )
                 c.add_argument("--timeout", type=duration, default="1m")
@@ -147,6 +151,46 @@ def parser():
                     default="10s",
                     help="Wall-clock limit per replay, including container startup",
                 )
+    reporting = commands.add_parser(
+        "report",
+        help="Generate plots and pages from a Captain workdir via benchd and report_df",
+    )
+    reporting.add_argument(
+        "--workdir",
+        type=Path,
+        required=True,
+        help="Captain workdir containing the ar/ archive tree",
+    )
+    reporting.add_argument(
+        "--output", type=Path, help="Report directory (default: WORKDIR/report)"
+    )
+    reporting.add_argument(
+        "--trials",
+        type=positive_int,
+        default=1,
+        help="Number of trials to analyze; equals the campaign REPEAT",
+    )
+    reporting.add_argument(
+        "--duration",
+        type=duration,
+        default="1m",
+        help="Campaign duration such as 60s, 10m or 1h",
+    )
+    reporting.add_argument(
+        "--workers",
+        type=positive_int,
+        default=os.cpu_count() or 4,
+        help="Concurrent processes for archive extraction",
+    )
+    reporting.add_argument("--title", default=f"Magma {RELEASE} Report")
+    reporting.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the plan without writing files",
+    )
+    reporting.add_argument(
+        "--log-file", type=Path, help="Also save subprocess logs here"
+    )
     return p
 
 
@@ -185,18 +229,44 @@ def programs(target):
 
 
 def versions(target):
-    target_dir(target)
-    # Docker builds always use the target's fixed fetch.sh snapshot.
-    return [{"name": "FIXED", "backend": "fetch.sh", "default": True}]
+    directory = target_dir(target)
+    if not (directory / "releases").is_file():
+        return [{"name": "FIXED", "backend": "fetch.sh", "default": True}]
+    values = {}
+    for line in (directory / "releases").read_text().splitlines():
+        match = re.fullmatch(r'([A-Za-z0-9_]+)="([^"]*)"', line.strip())
+        if match:
+            values[match[1]] = match[2]
+    prefix = target.replace("-", "_") + "_"
+    items = []
+    for key, url in values.items():
+        if key.startswith(prefix) and not key.endswith(("_STABLE_COMMIT", "_TAG")):
+            version = key[len(prefix) :]
+            items.append(
+                {
+                    "name": version,
+                    "url": url,
+                    "ref": values.get(key + "_STABLE_COMMIT", ""),
+                    "backend": "releases",
+                    "default": version == "PIONEER",
+                }
+            )
+    return sorted(items, key=lambda v: (not v["default"], v["name"]))
 
 
 def selected_version(args):
-    target_dir(args.target)
-    if args.target_version not in ("default", "FIXED"):
+    available = versions(args.target)
+    name = args.target_version
+    if name == "default":
+        name = next((v["name"] for v in available if v["default"]), "")
+    selected = next((v for v in available if v["name"] == name), None)
+    if selected is None:
         raise CLIError(
-            f"Unsupported target version {args.target_version!r}; available: FIXED"
+            f"Unsupported target version {args.target_version!r}; available: {', '.join(v['name'] for v in available)}"
         )
-    return "FIXED"
+    if selected["backend"] == "releases" and not selected["ref"]:
+        raise CLIError(f"Version {name} has no STABLE_COMMIT for this branch's fetcher")
+    return name
 
 
 def image_name(args, version):
@@ -263,6 +333,77 @@ exec "$OUT/monitor" --fetch watch --dump human /bin/bash -c 'exec "$FUZZER/runon
 
 
 def plan(args):
+    if args.command == "report":
+        workdir = args.workdir.expanduser().resolve()
+        if not (workdir / "ar").is_dir():
+            raise CLIError(f"No ar/ archive tree under workdir: {workdir}")
+        output = (
+            args.output.expanduser().resolve() if args.output else workdir / "report"
+        )
+        days = seconds(args.duration) / 86400
+        return {
+            "workdir": str(workdir),
+            "output": str(output),
+            "trials": args.trials,
+            "duration": args.duration,
+            "commands": [
+                [
+                    sys.executable,
+                    str(ROOT / "tools/benchd/exp2json.py"),
+                    "--workers",
+                    str(args.workers),
+                    str(workdir),
+                    str(output / "bench.json"),
+                ],
+                [
+                    sys.executable,
+                    str(ROOT / "tools/report_df/main.py"),
+                    str(output / "bench.json"),
+                    str(output),
+                    "--trials",
+                    str(args.trials),
+                    "--duration",
+                    str(days),
+                    "--title",
+                    args.title,
+                ],
+            ],
+        }
+    if args.command == "run" and args.config:
+        if (
+            any(
+                (
+                    args.fuzzer,
+                    args.target,
+                    args.program,
+                    args.workdir,
+                    args.image,
+                    args.args,
+                    args.fuzz_args,
+                    args.affinity,
+                )
+            )
+            or args.target_version != "default"
+            or args.timeout != "1m"
+            or args.poll != 5
+        ):
+            raise CLIError(
+                "With --config, define campaign settings in the Captain file instead of single-run flags"
+            )
+        config = args.config.expanduser().resolve()
+        if not config.is_file():
+            raise CLIError(f"Captain configuration not found: {config}")
+        return {
+            "config": str(config),
+            "backend": "captain",
+            "commands": [["bash", str(ROOT / "tools/captain/run.sh"), str(config)]],
+        }
+    if args.command == "run" and not all(
+        (args.fuzzer, args.target, args.program, args.workdir)
+    ):
+        raise CLIError(
+            "run requires --config or --fuzzer, --target, --program and --workdir"
+        )
     if args.fuzzer not in names("fuzzers", "run.sh"):
         raise CLIError(f"Unknown fuzzer: {args.fuzzer}; use list fuzzers")
     version = selected_version(args)
@@ -295,6 +436,8 @@ def plan(args):
             "USER_ID": os.getuid() or 1000,
             "GROUP_ID": os.getgid() or 1000,
         }
+        if version != "FIXED":
+            build_args["target_version"] = version
         if args.canary_mode != "plain":
             build_args["canaries" if args.canary_mode == "canaries" else "fixes"] = 1
         for attr, key in (
@@ -447,13 +590,98 @@ def remove_container(name):
         pass
 
 
-def execute(cmd, log, capture=False, timeout=None):
+JEKYLL_WRAPS = (
+    "{% raw %}",
+    "{% endraw %}",
+    "{% capture template %}",
+    "{% endcapture %}",
+)
+
+REPORT_CSS = """*:where(*, *::before, *::after) { box-sizing: border-box; }
+body {
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0; background: #f5f5f5; color: #212121; line-height: 1.5;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+h1, h2, h3 { font-weight: 500; color: #1a237e; }
+h1 { font-size: 2rem; border-bottom: 2px solid #3949ab; padding-bottom: 8px; }
+h2 { font-size: 1.5rem; margin-top: 2rem; }
+h3 { font-size: 1.15rem; }
+a { color: #1565c0; text-decoration: none; }
+a:hover { text-decoration: underline; }
+img {
+  max-width: 100%; height: auto; display: block; margin: 16px auto;
+  background: #fff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 12px;
+}
+table {
+  border-collapse: collapse; margin: 16px 0; width: 100%; background: #fff;
+}
+th, td {
+  border: 1px solid #e0e0e0; padding: 8px 12px; text-align: left; font-size: 0.9rem;
+}
+th { background: #e8eaf6; }
+tr:nth-child(even) { background: #fafafa; }
+.section {
+  background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+  padding: 20px 24px; margin: 24px 0;
+}
+.collapsible { list-style: none; padding: 0; margin: 8px 0; }
+.collapsible-header {
+  background: #e8eaf6; padding: 10px 16px; border-radius: 4px; cursor: pointer;
+}
+.collapsible-header h3 { margin: 0; }
+.collapsible-body {
+  padding: 12px 16px; border: 1px solid #e0e0e0; border-top: none;
+  border-radius: 0 0 4px 4px; color: #424242;
+}
+.browser-default { padding-left: 24px; }
+code, pre { background: #eeeeee; border-radius: 4px; }
+"""
+
+
+def render_pages(output, title):
+    """Convert report_df's Jekyll-style pages into standalone HTML."""
+    css_dir = output / "css"
+    css_dir.mkdir(exist_ok=True)
+    (css_dir / "report.css").write_text(REPORT_CSS)
+    pages = []
+    for page in sorted(output.rglob("*.md")):
+        lines = page.read_text().splitlines()
+        if lines and lines[0].strip() == "---":
+            end = next(
+                (i for i in range(1, len(lines)) if lines[i].strip() == "---"), None
+            )
+            if end is not None:
+                lines = lines[end + 1 :]
+        body = "\n".join(
+            line
+            for line in lines
+            if line.strip() not in JEKYLL_WRAPS
+            and not line.strip().startswith("{{ template | replace")
+        )
+        depth = len(page.relative_to(output).parts) - 1
+        html = page.with_suffix(".html")
+        html.write_text(
+            "<!DOCTYPE html>\n"
+            '<html lang="en"><head><meta charset="utf-8">\n'
+            f"<title>{title}</title>\n"
+            f'<link rel="stylesheet" href="{"../" * depth}css/report.css">\n'
+            "</head><body>\n"
+            f'<div class="container">\n{body}\n</div>\n'
+            "</body></html>\n"
+        )
+        pages.append(str(html))
+    return pages
+
+
+def execute(cmd, log, capture=False, timeout=None, env=None, cwd=None):
     """Stream diagnostics to stderr; capture oracle output separately for replay."""
     with (
         tempfile.TemporaryFile(mode="w+", errors="replace") as diagnostics,
         subprocess.Popen(
             cmd,
-            cwd=ROOT,
+            cwd=cwd or ROOT,
+            env=env,
             stdout=subprocess.PIPE,
             stderr=diagnostics if capture else subprocess.STDOUT,
             text=True,
@@ -491,6 +719,54 @@ def execute(cmd, log, capture=False, timeout=None):
 
 
 def perform(args, data):
+    if data.get("backend") == "captain":
+        log = args.log_file.expanduser().resolve().open("x") if args.log_file else None
+        try:
+            code, _ = execute(
+                data["commands"][0], log, env={**os.environ, "MAGMA": str(ROOT)}
+            )
+            return {
+                **data,
+                "status": "completed" if code == 0 else "failed",
+                "process_exit_code": code,
+            }, 0 if code == 0 else 1
+        finally:
+            if log:
+                log.close()
+    if args.command == "report":
+        output = Path(data["output"])
+        if output.exists() and any(output.iterdir()):
+            raise CLIError(f"Report output must be new or empty: {output}")
+        output.mkdir(parents=True)
+        log_path = (
+            args.log_file.expanduser().resolve()
+            if args.log_file
+            else output / "cli.log"
+        )
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        log = log_path.open("x")
+        data["log_file"] = str(log_path)
+        try:
+            for step, cmd in enumerate(data["commands"]):
+                code, _ = execute(
+                    cmd, log, cwd=ROOT / "tools/report_df" if step == 1 else None
+                )
+                if code:
+                    return {
+                        **data,
+                        "status": "failed",
+                        "step": step,
+                        "process_exit_code": code,
+                    }, 1
+                if step == 0:
+                    bench = output / "bench.json"
+                    summary = json.loads(bench.read_text())
+                    summary.setdefault("version", RELEASE)
+                    bench.write_text(json.dumps(summary))
+            pages = render_pages(output, args.title)
+            return {**data, "status": "completed", "pages": pages}, 0
+        finally:
+            log.close()
     if args.command != "build":
         inspect_image(args, data)
     if args.command == "run":

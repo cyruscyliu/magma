@@ -15,7 +15,7 @@ if [ -z $FUZZER ] || [ -z $TARGET ]; then
     echo '$FUZZER and $TARGET must be specified as environment variables.'
     exit 1
 fi
-IMG_NAME="magma/$FUZZER/$TARGET"
+IMG_NAME="${IMAGE_PREFIX:-magma}/$FUZZER/$TARGET"
 MAGMA=${MAGMA:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" >/dev/null 2>&1 \
     && pwd)"}
 source "$MAGMA/tools/captain/common.sh"

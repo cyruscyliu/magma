@@ -109,7 +109,7 @@ def _load_cov_data(target_dirs: list):
         return df, df_overtime
     except Exception as e:
         print(f"Error creating DataFrame: {e}. Is the target directory correct?")
-        exit(1)
+        return pd.DataFrame(), pd.DataFrame()
 
 
 def get_overtime_stats(
@@ -164,6 +164,8 @@ def fig_to_img_tag(fig: go.Figure, name: str) -> str:
 
 
 def gen_figures(df: pd.DataFrame, df_overtime: pd.DataFrame):
+    if df.empty and df_overtime.empty:
+        return
     for (target, program), group in df.groupby(["target", "program"]):
         # 1. Coverage Percentage Figure (Y = percent)
         plot_df = group[["fuzzer", "percent"]].dropna()

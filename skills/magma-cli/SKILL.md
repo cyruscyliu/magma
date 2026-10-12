@@ -1,6 +1,6 @@
 ---
 name: magma-cli
-description: Build Magma fuzzer/target Docker images, run fuzzing campaigns, and replay inputs through the bug oracle using the repository-root magma-cli. Use for agent-driven CLI experiments, configuration discovery, dry runs, and interpreting JSON results or failures.
+description: Build Magma fuzzer/target Docker images, run fuzzing campaigns, replay inputs through the bug oracle, and generate experiment reports using the repository-root magma-cli. Use for agent-driven CLI experiments, configuration discovery, dry runs, and interpreting JSON results or failures.
 ---
 
 # Magma CLI
@@ -99,6 +99,43 @@ A confirmed oracle trigger is a successful replay even if the wrapper exits 1.
 image built with canaries. Inputs without a trigger can otherwise be successful
 replays. This command consumes supplied files; it does not generate or migrate
 stored PoCs.
+
+## Run a Captain configuration
+
+```bash
+./magma-cli run --config tools/captain/captainrc.fullmatrix --log-file workdir/captain.log
+```
+
+`--config` delegates to `tools/captain/run.sh` with the given Captain file; it
+builds every fuzzer/target image and schedules the campaigns defined there.
+Single-run flags (`--fuzzer`, `--target`, `--program`, `--workdir`,
+`--target-version`, `--image`, `--args`, `--fuzz-args`, `--affinity`,
+`--timeout`, `--poll`) are rejected together with `--config`; define them in the
+Captain file instead. Archives, logs and per-build/per-campaign exit codes are
+collected in the Captain file's `WORKDIR`. The `MAGMA` environment is set to
+this checkout so nested scripts stay branch-local. `--dry-run` prints the plan.
+
+## Generate a report
+
+```bash
+./magma-cli report --workdir workdir/fullmatrix-60s
+```
+
+Converts a Captain workdir into the benchd experiment summary and the report_df
+report, then renders standalone HTML pages viewable with any static file server.
+Steps: `tools/benchd/exp2json.py` walks `WORKDIR/ar/**/ball.tar` monitor samples
+into `OUTPUT/bench.json`; `tools/report_df/main.py` generates plots and pages;
+the CLI strips the Jekyll wrappers and writes `index.html`, `fuzzers/*.html`,
+`targets/*.html`, `cov/coverage.html` plus `css/report.css`. A missing coverage
+data set renders an empty coverage page instead of failing.
+
+`--output` defaults to `WORKDIR/report` and must be new or empty. `--trials`
+defaults to 1 and `--duration` defaults to `1m`; both should match the
+campaign's `REPEAT` and `TIMEOUT` values, e.g. `--duration 60s`. The generated
+page paths appear in the JSON `pages` field. Serve the directory with any static
+file server, e.g. `python3 -m http.server 8000 --directory <output>`, and open
+the pages. Exit code `1` reports which pipeline `step` failed; the bench summary
+survives in `OUTPUT/bench.json`.
 
 ## Automation contract
 
