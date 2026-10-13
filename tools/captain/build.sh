@@ -53,6 +53,7 @@ docker build -t "$IMG_NAME" \
     --build-arg target_version="$TARGET_VERSION" \
     --build-arg USER_ID=$(id -u $USER) \
     --build-arg GROUP_ID=$(id -g $USER) \
+    --build-arg max_jobs="${MAX_JOBS:-}" \
     $mode_flag $isan_flag $harden_flag $coverage_flag \
     -f "$MAGMA/docker/Dockerfile" "$MAGMA"
 set +x

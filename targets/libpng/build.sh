@@ -17,8 +17,8 @@ fi
 cd "$TARGET/repo"
 autoreconf -f -i
 ./configure --with-libpng-prefix=MAGMA_ --disable-shared
-make -j$(nproc) clean
-make -j$(nproc) libpng16.la
+make -j${MAX_JOBS:-$(nproc)} clean
+make -j${MAX_JOBS:-$(nproc)} libpng16.la
 
 cp .libs/libpng16.a "$OUT/"
 

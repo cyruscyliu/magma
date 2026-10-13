@@ -15,11 +15,11 @@ fi
 
 # build lua library
 cd "$TARGET/repo"
-make -j$(nproc) clean
-make -j$(nproc) liblua.a
+make -j${MAX_JOBS:-$(nproc)} clean
+make -j${MAX_JOBS:-$(nproc)} liblua.a
 
 cp liblua.a "$OUT/"
 
 # build driver
-make -j$(nproc) lua
+make -j${MAX_JOBS:-$(nproc)} lua
 cp lua "$OUT/"

@@ -18,6 +18,8 @@ ENV SHARED 	/magma_shared
 
 ARG source_coverage
 ENV SOURCE_COVERAGE ${source_coverage}
+ARG max_jobs
+ENV MAX_JOBS ${max_jobs}
 ENV SOURCE_COVERAGE_FLAGS "-fprofile-instr-generate -fcoverage-mapping"
 
 ENV CC  /usr/bin/gcc

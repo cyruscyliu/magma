@@ -47,7 +47,7 @@ cmake "$TARGET/repo" \
   -DENABLE_QT6=OFF \
   -DENABLE_NSS3=OFF \
   -DENABLE_GPGME=OFF 
-make -j$(nproc) poppler poppler-cpp pdfimages pdftoppm
+make -j${MAX_JOBS:-$(nproc)} poppler poppler-cpp pdfimages pdftoppm
 
 cp "$WORK/poppler/utils/"{pdfimages,pdftoppm} "$OUT/"
 $CXX $CXXFLAGS -std=c++20 \

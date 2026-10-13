@@ -53,16 +53,16 @@ LIB_FUZZING_ENGINE="-Wall $LIB_FUZZING_ENGINE" ./configure \
     --with-pic \
     ac_cv_func_fork=yes
 
-make -j$(nproc) clean
+make -j${MAX_JOBS:-$(nproc)} clean
 
 # build oniguruma and link statically
 pushd oniguruma
 autoreconf -vfi
 ./configure --disable-shared
-make -j$(nproc)
+make -j${MAX_JOBS:-$(nproc)}
 popd
 
-make -j$(nproc)
+make -j${MAX_JOBS:-$(nproc)}
 
 # Generate seed corpora
 sapi/cli/php sapi/fuzzer/generate_unserialize_dict.php
