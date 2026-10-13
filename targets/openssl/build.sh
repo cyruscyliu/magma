@@ -31,9 +31,9 @@ export LDFLAGS="$LDFLAGS $LIB_FUZZING_ENGINE"
     enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers \
     $CFLAGS -fno-sanitize=alignment $CONFIGURE_FLAGS
 
-make -j$(nproc) clean
+make -j${MAX_JOBS:-$(nproc)} clean
 set +e
-make -j$(nproc) -k LDCMD="$CXX $CXXFLAGS"
+make -j${MAX_JOBS:-$(nproc)} -k LDCMD="$CXX $CXXFLAGS"
 set -e
 
 fuzzers=$(find fuzz -executable -type f '!' -name \*.py '!' -name \*-test '!' -name \*.pl)

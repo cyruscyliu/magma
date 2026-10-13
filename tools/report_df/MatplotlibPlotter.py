@@ -250,8 +250,10 @@ def bug_survival_plots(bd, outdir):
     METRICS = bd.get_all_metrics()
     MARKERS = ('.', '>')
     LINESTYLES = (':', '-')
-    COLORS = tuple(c['color'] for c in
-                   plt.rcParams['axes.prop_cycle'][:len(FUZZERS)])
+    prop_cycle = plt.rcParams['axes.prop_cycle']
+    cycle_colors = [c['color'] for c in prop_cycle]
+    COLORS = tuple(cycle_colors[i % len(cycle_colors)]
+                   for i in range(len(FUZZERS)))
 
     metric_markers = dict(zip(METRICS, MARKERS))
     metric_linestyles = dict(zip(METRICS, LINESTYLES))
