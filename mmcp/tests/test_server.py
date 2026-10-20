@@ -12,7 +12,6 @@ def test_server_registers_tools_and_resources(magma_root):
     server.build.register(m)
     server.campaign.register(m)
     server.results.register(m)
-    server.releasegen.register(m)
     server.entity_files.register(m)
 
     tools = {t.name for t in __import__("asyncio").run(m.list_tools())}
@@ -23,7 +22,6 @@ def test_server_registers_tools_and_resources(magma_root):
         "magma_get_campaign_results",
         "magma_run_testcase",
         "magma_list_entity_files",
-        "magma_generate_target_release",
     } <= tools
 
 

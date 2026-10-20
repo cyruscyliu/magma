@@ -27,12 +27,11 @@ mcp = FastMCP(
 )
 
 # Register all tool modules
-from mmcp.tools import build, campaign, results, releasegen, entity_files
+from mmcp.tools import build, campaign, results, entity_files
 
 build.register(mcp)
 campaign.register(mcp)
 results.register(mcp)
-releasegen.register(mcp)
 entity_files.register(mcp)
 
 # Register all resource modules
