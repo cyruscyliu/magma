@@ -81,46 +81,6 @@ def register(mcp: FastMCP):
         })
 
     @mcp.tool()
-    async def magma_build_check_image(
-        fuzzer: str,
-        target: str,
-        target_version: str = "PIONEER",
-        canary_mode: int = 1,
-        isan: bool = False,
-        harden: bool = False,
-        source_coverage: bool = False,
-    ) -> str:
-        """Run a reduced-context build-check for fast target verification.
-
-        This is intended for ByteFuse task2 "update targets" verification loops.
-        It uses tools/captain/build_check.py which constructs a minimal
-        Docker build context (skipping corpus/PoCs) and builds via
-        docker/Dockerfile.build, then runs the appropriate entrypoint.
-        """
-        if fuzzer not in paths.list_fuzzer_names():
-            return json.dumps({"error": f"Unknown fuzzer: {fuzzer}"})
-        if target not in paths.list_target_names():
-            return json.dumps({"error": f"Unknown target: {target}"})
-        if canary_mode not in (1, 2, 3):
-            return json.dumps({"error": f"Invalid canary_mode: {canary_mode}. Must be 1, 2, or 3."})
-
-        env = _make_build_env(fuzzer, target, target_version, canary_mode, isan, harden, source_coverage)
-        image_name = "magma/build-check:latest"
-        record = await task_manager.spawn(
-            task_type=TaskType.BUILD,
-            description=f"build-check {image_name}",
-            cmd=["python3", str(paths.BUILD_TARGET_CHECK_SH)],
-            env=env,
-            cwd=str(paths.MAGMA_ROOT),
-        )
-
-        return json.dumps({
-            "task_id": record.task_id,
-            "image_name": image_name,
-            "status": "started",
-        })
-
-    @mcp.tool()
     async def magma_build_images(
         fuzzers: list[str] | None = None,
         targets: list[str] | None = None,
