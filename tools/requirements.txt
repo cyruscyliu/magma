@@ -11,6 +11,9 @@ scipy>=1.4.1
 seaborn>=0.11.0
 scikit-posthocs>=0.6.4
 
+# for gen_target_releases
+gitpython>=3.1.0
+
 # for gen_cov_html
 plotly>=6.2.0
 numpy>=2.3.1
