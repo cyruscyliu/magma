@@ -65,13 +65,18 @@ RUN ${FUZZER}/build.sh
 
 ARG target_name
 ARG target_path=targets/${target_name}
+# Empty → fetch_target.sh runs the target's fetch.sh; a releases version (e.g.
+# PIONEER) → fetch_target.sh fetches the commit pinned in targets/<t>/releases.
+ARG target_version
 ENV TARGET 	${MAGMA_R}/${target_path}
+ENV TARGET_NAME	${target_name}
+ENV TARGET_VERSION	${target_version}
 USER root:root
 RUN mkdir -p ${TARGET} && chown magma:magma ${TARGET}
 COPY --chown=magma:magma ${magma_root}/${target_path} ${TARGET}/
 RUN ${TARGET}/preinstall.sh
 USER magma:magma
-RUN ${TARGET}/fetch.sh
+RUN ${MAGMA}/fetch_target.sh
 RUN if [ -n "${SOURCE_COVERAGE}" ]; then \
         cp -a "${TARGET}/." "${COV}/"; \
     fi

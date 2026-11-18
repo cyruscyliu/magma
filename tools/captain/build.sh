@@ -9,6 +9,8 @@
 #       unset)
 # + env HARDEN: if set, build the benchmark with hardened canaries (default:
 #       unset)
+# + env TARGET_VERSION: version in targets/<t>/releases to build (e.g. PIONEER);
+#       unset builds the commit in the target's fetch.sh (default: unset)
 ##
 
 if [ -z $FUZZER ] || [ -z $TARGET ]; then
@@ -48,6 +50,7 @@ set -x
 docker build -t "$IMG_NAME" \
     --build-arg fuzzer_name="$FUZZER" \
     --build-arg target_name="$TARGET" \
+    --build-arg target_version="${TARGET_VERSION:-}" \
     --build-arg USER_ID=$(id -u $USER) \
     --build-arg GROUP_ID=$(id -g $USER) \
     --build-arg max_jobs="${MAX_JOBS:-}" \
