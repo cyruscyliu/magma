@@ -1,1 +1,3 @@
+TARGET_REPO="https://github.com/pnggroup/libpng.git"
+
 PROGRAMS=(libpng_read_fuzzer)

@@ -6,8 +6,11 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
+# Currently points to the 2021 baseline (Magma v1.2-next)
+SYMCC_STABLE_HASH=82151a62e3b702a2c699ca4d8ef91d3bf9beeb2b
+
 git clone --no-checkout https://github.com/eurecom-s3/symcc.git "$FUZZER/symcc"
-git -C "$FUZZER/symcc" checkout 82151a62e3b702a2c699ca4d8ef91d3bf9beeb2b
+git -C "$FUZZER/symcc" checkout $SYMCC_STABLE_HASH
 
 git -C "$FUZZER/symcc" submodule init
 git -C "$FUZZER/symcc" submodule update

@@ -6,8 +6,11 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
+# Currently points to the 2021 baseline (Magma v1.2-next)
+AFLPLUSPLUS_STABLE_HASH=458eb0813a6f7d63eed97f18696bca8274533123
+
 git clone --no-checkout https://github.com/AFLplusplus/AFLplusplus "$FUZZER/repo"
-git -C "$FUZZER/repo" checkout 458eb0813a6f7d63eed97f18696bca8274533123
+git -C "$FUZZER/repo" checkout $AFLPLUSPLUS_STABLE_HASH
 
 # Fix: CMake-based build systems fail with duplicate (of main) or undefined references (of LLVMFuzzerTestOneInput)
 sed -i '{s/^int main/__attribute__((weak)) &/}' $FUZZER/repo/utils/aflpp_driver/aflpp_driver.c

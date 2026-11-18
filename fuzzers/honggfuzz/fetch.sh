@@ -6,8 +6,11 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
+# Currently points to the 2021 baseline (Magma v1.2-next)
+HONGGFUZZ_STABLE_HASH=fc6b818c1276056bc565d07edec6ada784cd1670
+
 git clone --no-checkout https://github.com/google/honggfuzz.git "$FUZZER/repo"
-git -C "$FUZZER/repo" checkout fc6b818c1276056bc565d07edec6ada784cd1670
+git -C "$FUZZER/repo" checkout $HONGGFUZZ_STABLE_HASH
 
 patch -p1 -d "$FUZZER/repo" << EOF
 --- a/linux/trace.c

@@ -1,0 +1,3 @@
+# 2021 baseline: the commit targets/libtiff/fetch.sh builds. update-target re-pins it.
+libtiff_PIONEER="https://gitlab.com/libtiff/libtiff.git"
+libtiff_PIONEER_STABLE_COMMIT="c145a6c14978f73bb484c955eb9f84203efcb12e"

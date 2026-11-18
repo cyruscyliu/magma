@@ -6,8 +6,11 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
+# Currently points to the 2021 baseline (Magma v1.2-next)
+AFL_STABLE_HASH=61037103ae3722c8060ff7082994836a794f978e
+
 git clone --no-checkout https://github.com/google/AFL.git "$FUZZER/afl"
-git -C "$FUZZER/afl" checkout 61037103ae3722c8060ff7082994836a794f978e
+git -C "$FUZZER/afl" checkout $AFL_STABLE_HASH
 cp "$FUZZER/src/afl_driver.cpp" "$FUZZER/afl/afl_driver.cpp"
 
 git clone --no-checkout https://github.com/eurecom-s3/symcc.git "$FUZZER/symcc"

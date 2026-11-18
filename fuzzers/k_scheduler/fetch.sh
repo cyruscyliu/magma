@@ -12,8 +12,11 @@ export GOPATH="$FUZZER/repo/go"
 mkdir -p $GOPATH
 go install github.com/SRI-CSL/gllvm/cmd/...@latest
 
+# Currently points to the 2021 baseline (Magma v1.2-next)
+KSCHEDULER_STABLE_HASH=36bc5aa658fa7c9716aee08a8ff22419f28e3fe9
+
 git clone --no-checkout https://github.com/Dongdongshe/K-Scheduler "$FUZZER/repo/kscheduler"
-git -C "$FUZZER/repo/kscheduler" checkout 36bc5aa658fa7c9716aee08a8ff22419f28e3fe9
+git -C "$FUZZER/repo/kscheduler" checkout $KSCHEDULER_STABLE_HASH
 
 sed -i '{s/^int main/__attribute__((weak)) &/}' \
     "$FUZZER/repo/kscheduler/libfuzzer_integration/llvm_11.0.1/compiler-rt/lib/fuzzer/afl/afl_driver.cpp"

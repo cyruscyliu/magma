@@ -6,9 +6,12 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
+# Currently points to the 2021 baseline (Magma v1.2-next)
+INSTRIM_STABLE_HASH=82b56358f5f842a194e458c63c26799f0ac393d7
+
 git clone --no-checkout https://github.com/csienslab/instrim.git \
     "$FUZZER/instrim"
-git -C "$FUZZER/instrim" checkout 82b56358f5f842a194e458c63c26799f0ac393d7
+git -C "$FUZZER/instrim" checkout $INSTRIM_STABLE_HASH
 
 # Fix: CMake linker flags
 cat >> "$FUZZER/instrim/CMakeLists.txt" << EOF

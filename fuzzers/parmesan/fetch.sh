@@ -6,8 +6,11 @@ set -e
 # - env FUZZER: path to fuzzer work dir
 ##
 
+# Currently points to the 2021 baseline (Magma v1.2-next)
+PARMESAN_STABLE_HASH=fac580130146c07a2a0f82a24dfe0704e1851ab3
+
 git clone --no-checkout https://github.com/vusec/parmesan "$FUZZER/repo"
-git -C "$FUZZER/repo" checkout fac580130146c07a2a0f82a24dfe0704e1851ab3
+git -C "$FUZZER/repo" checkout $PARMESAN_STABLE_HASH
 
 # Use Angora version of gen_library_abilist.sh script (because it handles
 # numbered .so extensions properly)
